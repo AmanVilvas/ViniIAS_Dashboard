@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Search, Bell, Command, BookOpen, Trophy, PieChart, GraduationCap, Award, MessageSquare, Settings, Flag, ChevronRight, Play, Clock, Calendar, ArrowLeft, ArrowRight, Flame, Target, Medal, Menu, X } from 'lucide-react';
 import logo from "./logo.png";
+import flagImage from "./flag.png";
+import bgImage from "./bg.jpg";
 
 function App() {
   const [showDetails, setShowDetails] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showMenuTray, setShowMenuTray] = useState(false);
 
   const toggleDetails = () => {
     setShowDetails(prev => !prev);
@@ -31,6 +34,7 @@ function App() {
         <div 
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => {
+            
             setIsMobileMenuOpen(false);
             setShowDetails(false);
           }}
@@ -38,8 +42,8 @@ function App() {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed lg:static w-[260px] sm:w-[280px] p-6 bg-white shadow-sm h-screen flex flex-col transition-transform duration-300 lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} z-50`}>
-        <div className="flex justify-center items-center mb-5">
+      <aside className={`fixed lg:static w-[260px] sm:w-[280px] p-5 bg-white shadow-sm h-screen flex flex-col transition-transform duration-300 lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} z-50`}>
+        <div className="flex justify-center items-center mb-4">
           <img src={logo} alt="ViniIAS" className="w-74 h-auto transform scale-125" />
         </div>
 
@@ -51,6 +55,7 @@ function App() {
           </button>
           <button className="sidebar-link">
             <BookOpen size={20} />
+
             <span className="text-[15px]">Lessons</span>
           </button>
           <button className="sidebar-link">
@@ -80,19 +85,37 @@ function App() {
           </button>
         </div>
 
-        <div className="mt-6">
-          <div className="relative bg-gradient-to-br from-[#FF6934] to-[#FF8B34] p-6 rounded-[24px] text-white">
-            <div className="absolute -top-8 right-4">
-              <div className="bg-white p-3 rounded-lg shadow-md transform rotate-[15deg]">
-                <Flag className="text-[#FF6934]" size={20} />
+        <div className="mt-11">
+          {/* Flag positioned absolutely relative to the container */}
+          <div className="relative">
+            {/* Flag image positioned above the premium card */}
+            <div className="absolute -top-11 left-2 z-30">
+              <img 
+                src={flagImage} 
+                alt="Premium Flag" 
+                className="w-25 h-20 transform rotate-[28deg]"
+              />
+            </div>
+
+            {/* Premium card */}
+            <div className="relative rounded-[24px] text-white overflow-hidden">
+              {/* Background Image */}
+              <img 
+                src={bgImage} 
+                alt="background" 
+                className="absolute inset-0 w-full h-full object-cover rounded-[24px]"
+              />
+              
+              {/* Content */}
+              <div className="relative z-10 p-4 pt-3.5">
+                <h3 className="font-semibold text-[15px] mb-2">Get Premium Now!</h3>
+                <p className="text-[13px] text-white/90 mb-5">Reach our special feature by subscribe our plan.</p>
+                <button className="w-full bg-white text-[#FF6934] px-4 py-2.5 rounded-lg text-[13px] font-medium flex items-center justify-center gap-1.5 hover:bg-opacity-90 transition-colors group">
+                  Upgrade Now
+                  <ChevronRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+                </button>
               </div>
             </div>
-            <h3 className="font-semibold text-base mb-2">Get Premium Now!</h3>
-            <p className="text-[13px] text-white/90 mb-5">Reach our special feature by subscribe our plan.</p>
-            <button className="w-full bg-white text-[#FF6934] px-4 py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 hover:bg-opacity-90 transition-colors group">
-              Upgrade Now
-              <ChevronRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-            </button>
           </div>
         </div>
       </aside>
@@ -294,7 +317,52 @@ function App() {
         </section>
       </main>
 
-      {/* Right Sidebar - Profile Details */}
+      {/* Menu Tray Toggle Button - Only show when profile is closed */}
+      {!showDetails && (
+        <button 
+          onClick={() => setShowMenuTray(prev => !prev)}
+          className="fixed right-6 top-1/2 -translate-y-1/2 bg-gradient-to-r from-[#FF6934] to-[#FF8B34] text-white p-3 rounded-l-xl shadow-lg z-40 group"
+        >
+          {showMenuTray ? (
+            <X size={24} className="transition-transform group-hover:scale-110" />
+          ) : (
+            <Menu size={24} className="transition-transform group-hover:scale-110" />
+          )}
+        </button>
+      )}
+
+      {/* Sliding Menu Tray */}
+      <div className={`fixed right-0 top-0 h-full w-[300px] bg-white shadow-lg transition-transform duration-300 ease-in-out z-30 ${showMenuTray ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="p-6 space-y-4">
+          {/* Ask a Mentor Button */}
+          <button className="w-full bg-gradient-to-br from-[#FFF8F6] to-white p-4 rounded-xl border border-[#FFE8E0] shadow-sm hover:shadow-md transition-all duration-200 group">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-gradient-to-br from-[#FF6934] to-[#FF8B34] rounded-lg text-white">
+                <MessageSquare size={24} />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-[15px] text-gray-900 group-hover:text-[#FF6934] transition-colors">Ask a Mentor</h3>
+                <p className="text-[13px] text-gray-500">Get expert guidance</p>
+              </div>
+            </div>
+          </button>
+
+          {/* Submit Assignment Button */}
+          <button className="w-full bg-gradient-to-br from-[#FFF8F6] to-white p-4 rounded-xl border border-[#FFE8E0] shadow-sm hover:shadow-md transition-all duration-200 group">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-gradient-to-br from-[#FF6934] to-[#FF8B34] rounded-lg text-white">
+                <BookOpen size={24} />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-[15px] text-gray-900 group-hover:text-[#FF6934] transition-colors">Submit Assignment</h3>
+                <p className="text-[13px] text-gray-500">Upload your work</p>
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* Profile Details Sidebar */}
       {showDetails && (
         <aside className={`fixed lg:static w-full sm:w-[320px] lg:w-[320px] bg-gradient-to-b from-white to-[#FEFEFE] shadow-sm h-full overflow-y-auto transition-transform duration-300 lg:translate-x-0 top-0 right-0 z-50 ${showDetails ? 'translate-x-0' : 'translate-x-full'}`}>
           {/* Header */}
