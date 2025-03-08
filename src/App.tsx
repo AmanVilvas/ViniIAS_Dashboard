@@ -321,41 +321,43 @@ function App() {
       {!showDetails && (
         <button 
           onClick={() => setShowMenuTray(prev => !prev)}
-          className="fixed right-6 top-1/2 -translate-y-1/2 bg-gradient-to-r from-[#FF6934] to-[#FF8B34] text-white p-3 rounded-l-xl shadow-lg z-40 group"
+          className="fixed right-6 top-1/2 -translate-y-1/2 bg-gradient-to-r from-[#FF6934] to-[#FF8B34] text-white p-3 rounded-l-xl shadow-lg z-40 group transition-all duration-300 ease-in-out hover:shadow-xl hover:translate-x-1"
         >
           {showMenuTray ? (
-            <X size={24} className="transition-transform group-hover:scale-110" />
+            <X size={24} className="transition-transform duration-300 ease-in-out group-hover:rotate-90" />
           ) : (
-            <Menu size={24} className="transition-transform group-hover:scale-110" />
+            <Menu size={24} className="transition-transform duration-300 ease-in-out group-hover:scale-110" />
           )}
         </button>
       )}
 
       {/* Sliding Menu Tray */}
-      <div className={`fixed right-0 top-0 h-full w-[300px] bg-white shadow-lg transition-transform duration-300 ease-in-out z-30 ${showMenuTray ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className={`fixed right-0 top-0 h-full w-[300px] bg-white shadow-lg transition-all duration-500 ease-in-out z-30 ${
+        showMenuTray ? 'translate-x-0 opacity-100 shadow-2xl' : 'translate-x-full opacity-0'
+      }`}>
         <div className="p-6 space-y-4">
           {/* Ask a Mentor Button */}
-          <button className="w-full bg-gradient-to-br from-[#FFF8F6] to-white p-4 rounded-xl border border-[#FFE8E0] shadow-sm hover:shadow-md transition-all duration-200 group">
+          <button className="w-full bg-gradient-to-br from-[#FFF8F6] to-white p-4 rounded-xl border border-[#FFE8E0] shadow-sm transition-all duration-300 ease-in-out hover:shadow-md hover:scale-[1.02] hover:border-[#FF6934]/20 group">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-gradient-to-br from-[#FF6934] to-[#FF8B34] rounded-lg text-white">
-                <MessageSquare size={24} />
+              <div className="p-2.5 bg-gradient-to-br from-[#FF6934] to-[#FF8B34] rounded-lg text-white transition-transform duration-300 ease-in-out group-hover:scale-110">
+                <MessageSquare size={24} className="transition-transform duration-300 group-hover:rotate-12" />
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-[15px] text-gray-900 group-hover:text-[#FF6934] transition-colors">Ask a Mentor</h3>
-                <p className="text-[13px] text-gray-500">Get expert guidance</p>
+                <h3 className="font-semibold text-[15px] text-gray-900 transition-colors duration-300 group-hover:text-[#FF6934]">Ask a Mentor</h3>
+                <p className="text-[13px] text-gray-500 transition-opacity duration-300 group-hover:opacity-75">Get expert guidance</p>
               </div>
             </div>
           </button>
 
           {/* Submit Assignment Button */}
-          <button className="w-full bg-gradient-to-br from-[#FFF8F6] to-white p-4 rounded-xl border border-[#FFE8E0] shadow-sm hover:shadow-md transition-all duration-200 group">
+          <button className="w-full bg-gradient-to-br from-[#FFF8F6] to-white p-4 rounded-xl border border-[#FFE8E0] shadow-sm transition-all duration-300 ease-in-out hover:shadow-md hover:scale-[1.02] hover:border-[#FF6934]/20 group">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-gradient-to-br from-[#FF6934] to-[#FF8B34] rounded-lg text-white">
-                <BookOpen size={24} />
+              <div className="p-2.5 bg-gradient-to-br from-[#FF6934] to-[#FF8B34] rounded-lg text-white transition-transform duration-300 ease-in-out group-hover:scale-110">
+                <BookOpen size={24} className="transition-transform duration-300 group-hover:rotate-12" />
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-[15px] text-gray-900 group-hover:text-[#FF6934] transition-colors">Submit Assignment</h3>
-                <p className="text-[13px] text-gray-500">Upload your work</p>
+                <h3 className="font-semibold text-[15px] text-gray-900 transition-colors duration-300 group-hover:text-[#FF6934]">Submit Assignment</h3>
+                <p className="text-[13px] text-gray-500 transition-opacity duration-300 group-hover:opacity-75">Upload your work</p>
               </div>
             </div>
           </button>
