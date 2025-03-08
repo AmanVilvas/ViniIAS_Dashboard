@@ -2,6 +2,197 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --primary: #FF6934;
+  --primary-light: #FFF8F6;
+  --secondary: #FF8B34;
+}
+
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: var(--primary-light);
+}
+
+@layer components {
+  .sidebar-link {
+    @apply flex items-center gap-3 w-full p-2.5 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors;
+  }
+  
+  .sidebar-link.active {
+    @apply bg-[#FFF8F6] text-[#FF6934];
+  }
+
+  .progress-bar {
+    @apply bg-[#FFE8E0] h-2 rounded-full mb-4;
+  }
+
+  .progress-bar-fill {
+    @apply bg-[#FF6934] h-full rounded-full transition-all duration-300;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm;
+  }
+
+  .stats-card {
+    @apply flex flex-col items-center justify-center p-4 bg-white rounded-xl;
+  }
+
+  .mobile-menu-button {
+    @apply lg:hidden fixed top-4 left-4 z-50 bg-white p-2 rounded-lg shadow-sm;
+  }
+
+  .overlay {
+    @apply fixed inset-0 bg-black/50 z-40 lg:hidden;
+  }
+}
+
+/* Responsive Design */
+@media (min-width: 1536px) {
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  
+  .course-grid {
+    grid-template-columns: repeat(3, minmax(0, 360px));
+    gap: 1.75rem;
+  }
+}
+
+@media (max-width: 1535px) {
+  .course-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+  
+  .continue-learning-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 1279px) {
+  .course-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  
+  .sidebar, .details-panel {
+    width: 260px;
+  }
+
+  .main-content {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 1023px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 50;
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .details-panel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 280px;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    z-index: 50;
+  }
+  
+  .details-panel.open {
+    transform: translateX(0);
+  }
+
+  .header {
+    padding-top: 4rem;
+  }
+  
+  .course-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+  
+  .continue-learning-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .search-container {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 767px) {
+  .course-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .search-container {
+    width: 100%;
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .main-content {
+    padding: 1rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .sidebar,
+  .details-panel {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 639px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+  }
+
+  .calendar-day {
+    font-size: 0.75rem;
+  }
 }
