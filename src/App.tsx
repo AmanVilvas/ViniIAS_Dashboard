@@ -8,6 +8,7 @@ function App() {
   const [showDetails, setShowDetails] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showMenuTray, setShowMenuTray] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const toggleDetails = () => {
     setShowDetails(prev => !prev);
@@ -43,8 +44,12 @@ function App() {
 
       {/* Sidebar */}
       <aside className={`fixed lg:static w-[260px] sm:w-[280px] p-5 bg-white shadow-sm h-screen flex flex-col transition-transform duration-300 lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} z-50`}>
-        <div className="flex justify-center items-center mb-4">
-          <img src={logo} alt="ViniIAS" className="w-74 h-auto transform scale-125" />
+        <div className="flex justify-start items-center mb-4 pl-1">
+          <img 
+            src={logo} 
+            alt="ViniIAS" 
+            className="w-auto h-auto transform scale-[1.35] -translate-x-2" 
+          />
         </div>
 
         <div className="space-y-3 flex-1">
@@ -134,15 +139,133 @@ function App() {
                 className="pl-12 pr-4 py-2.5 rounded-lg border border-gray-200 w-full text-sm focus:outline-none focus:border-[#FF6934]"
               />
             </div>
-            <div className="header-actions flex items-center gap-3 sm:gap-5">
-              <button className="p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 hidden sm:block">
-                <Command size={20} />
-              </button>
-              <button className="p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 relative">
-                <Bell size={20} />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-              <button onClick={toggleDetails} className="cursor-pointer">
+            <div className="header-actions flex items-center gap-3 sm:gap-4">
+              {/* Only show these buttons when profile is not open */}
+              {!showDetails && (
+                <>
+                  <button className="hidden sm:flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-white border border-[#E2E8F0] shadow-sm hover:shadow-lg hover:scale-[1.02] text-[#3B82F6] group relative transition-all duration-300 ease-out overflow-hidden">
+                    {/* Modern blue gradient overlay on hover */}
+                    <div className="absolute inset-0 bg-[linear-gradient(110deg,#3B82F6,#60A5FA,#93C5FD)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out"></div>
+                    
+                    {/* Icon wrapper with background */}
+                    <div className="relative z-10 p-1.5 rounded-lg bg-blue-50 group-hover:bg-white/10 transition-colors duration-300">
+                      <MessageSquare size={18} className="text-blue-500 transition-all duration-300 group-hover:rotate-12 group-hover:text-white" />
+                    </div>
+                    
+                    {/* Text content */}
+                    <span className="relative z-10 font-medium text-sm group-hover:text-white transition-colors duration-300">Ask A Mentor</span>
+                  </button>
+
+                  <button className="hidden sm:flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-white border border-[#E2E8F0] shadow-sm hover:shadow-lg hover:scale-[1.02] text-[#8B5CF6] group relative transition-all duration-300 ease-out overflow-hidden">
+                    {/* Modern purple gradient overlay on hover */}
+                    <div className="absolute inset-0 bg-[linear-gradient(110deg,#8B5CF6,#A78BFA,#C4B5FD)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out"></div>
+                    
+                    {/* Icon wrapper with background */}
+                    <div className="relative z-10 p-1.5 rounded-lg bg-purple-50 group-hover:bg-white/10 transition-colors duration-300">
+                      <BookOpen size={18} className="text-purple-500 transition-all duration-300 group-hover:rotate-12 group-hover:text-white" />
+                    </div>
+                    
+                    {/* Text content */}
+                    <span className="relative z-10 font-medium text-sm group-hover:text-white transition-colors duration-300">Submit Assignment</span>
+                  </button>
+
+                  {/* Notification button with dropdown */}
+                  <div className="relative">
+                    <button 
+                      onClick={() => setShowNotifications(prev => !prev)}
+                      className="p-2.5 rounded-xl bg-white border border-[#FFE8E0] shadow-sm hover:shadow-lg hover:scale-[1.02] relative transition-all duration-300 group"
+                    >
+                      <Bell size={20} className="text-[#FF6934] group-hover:rotate-12 transition-transform duration-300" />
+                      <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+
+                    {/* Notification Dropdown */}
+                    {showNotifications && (
+                      <>
+                        {/* Overlay to close dropdown */}
+                        <div 
+                          className="fixed inset-0 z-40"
+                          onClick={() => setShowNotifications(false)}
+                        ></div>
+                        
+                        {/* Dropdown content */}
+                        <div className="absolute right-0 mt-2 w-[320px] bg-white rounded-xl shadow-lg z-50 overflow-hidden">
+                          <div className="p-4 border-b border-gray-100">
+                            <h3 className="font-semibold text-gray-900">Notifications</h3>
+                          </div>
+                          
+                          {/* Notification items */}
+                          <div className="max-h-[400px] overflow-y-auto">
+                            {/* Message notification */}
+                            <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100">
+                              <div className="flex items-start gap-3">
+                                <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-100">
+                                  <MessageSquare size={18} className="text-white" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-gray-900">New message from mentor</p>
+                                  <p className="text-xs text-gray-500 mt-1">Sarah responded to your question about React hooks</p>
+                                  <p className="text-xs text-gray-400 mt-2">2 minutes ago</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Assignment notification */}
+                            <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100">
+                              <div className="flex items-start gap-3">
+                                <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-300">
+                                  <BookOpen size={18} className="text-white" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-gray-900">Assignment Graded</p>
+                                  <p className="text-xs text-gray-500 mt-1">Your UI/UX project received an A+ grade!</p>
+                                  <p className="text-xs text-gray-400 mt-2">1 hour ago</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Achievement notification */}
+                            <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100">
+                              <div className="flex items-start gap-3">
+                                <div className="p-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-200">
+                                  <Trophy size={18} className="text-white" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-gray-900">New Achievement!</p>
+                                  <p className="text-xs text-gray-500 mt-1">You've completed 5 courses this month</p>
+                                  <p className="text-xs text-gray-400 mt-2">2 hours ago</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Course notification */}
+                            <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+                              <div className="flex items-start gap-3">
+                                <div className="p-2 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-200">
+                                  <Play size={18} className="text-white" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-gray-900">New Course Available</p>
+                                  <p className="text-xs text-gray-500 mt-1">Advanced JavaScript Patterns is now live</p>
+                                  <p className="text-xs text-gray-400 mt-2">5 hours ago</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* View all button */}
+                          <div className="p-3 bg-gray-50 border-t border-gray-100">
+                            <button className="w-full text-sm text-[#FF6934] font-medium hover:text-[#FF8B34] transition-colors">
+                              View All Notifications
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
+              <button onClick={toggleDetails} className="cursor-pointer transition-transform hover:scale-[1.02] duration-300">
                 <img
                   src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop"
                   alt="Profile"
@@ -316,53 +439,6 @@ function App() {
           </div>
         </section>
       </main>
-
-      {/* Menu Tray Toggle Button - Only show when profile is closed */}
-      {!showDetails && (
-        <button 
-          onClick={() => setShowMenuTray(prev => !prev)}
-          className="fixed right-6 top-1/2 -translate-y-1/2 bg-gradient-to-r from-[#FF6934] to-[#FF8B34] text-white p-3 rounded-l-xl shadow-lg z-40 group transition-all duration-300 ease-in-out hover:shadow-xl hover:translate-x-1"
-        >
-          {showMenuTray ? (
-            <X size={24} className="transition-transform duration-300 ease-in-out group-hover:rotate-90" />
-          ) : (
-            <Menu size={24} className="transition-transform duration-300 ease-in-out group-hover:scale-110" />
-          )}
-        </button>
-      )}
-
-      {/* Sliding Menu Tray */}
-      <div className={`fixed right-0 top-0 h-full w-[300px] bg-white shadow-lg transition-all duration-500 ease-in-out z-30 ${
-        showMenuTray ? 'translate-x-0 opacity-100 shadow-2xl' : 'translate-x-full opacity-0'
-      }`}>
-        <div className="p-6 space-y-4">
-          {/* Ask a Mentor Button */}
-          <button className="w-full bg-gradient-to-br from-[#FFF8F6] to-white p-4 rounded-xl border border-[#FFE8E0] shadow-sm transition-all duration-300 ease-in-out hover:shadow-md hover:scale-[1.02] hover:border-[#FF6934]/20 group">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-gradient-to-br from-[#FF6934] to-[#FF8B34] rounded-lg text-white transition-transform duration-300 ease-in-out group-hover:scale-110">
-                <MessageSquare size={24} className="transition-transform duration-300 group-hover:rotate-12" />
-              </div>
-              <div className="text-left">
-                <h3 className="font-semibold text-[15px] text-gray-900 transition-colors duration-300 group-hover:text-[#FF6934]">Ask a Mentor</h3>
-                <p className="text-[13px] text-gray-500 transition-opacity duration-300 group-hover:opacity-75">Get expert guidance</p>
-              </div>
-            </div>
-          </button>
-
-          {/* Submit Assignment Button */}
-          <button className="w-full bg-gradient-to-br from-[#FFF8F6] to-white p-4 rounded-xl border border-[#FFE8E0] shadow-sm transition-all duration-300 ease-in-out hover:shadow-md hover:scale-[1.02] hover:border-[#FF6934]/20 group">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-gradient-to-br from-[#FF6934] to-[#FF8B34] rounded-lg text-white transition-transform duration-300 ease-in-out group-hover:scale-110">
-                <BookOpen size={24} className="transition-transform duration-300 group-hover:rotate-12" />
-              </div>
-              <div className="text-left">
-                <h3 className="font-semibold text-[15px] text-gray-900 transition-colors duration-300 group-hover:text-[#FF6934]">Submit Assignment</h3>
-                <p className="text-[13px] text-gray-500 transition-opacity duration-300 group-hover:opacity-75">Upload your work</p>
-              </div>
-            </div>
-          </button>
-        </div>
-      </div>
 
       {/* Profile Details Sidebar */}
       {showDetails && (
