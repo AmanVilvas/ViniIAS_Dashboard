@@ -1,14 +1,108 @@
-import React, { useState } from 'react';
-import { Search, Bell, Command, BookOpen, Trophy, PieChart, GraduationCap, Award, MessageSquare, Settings, Flag, ChevronRight, Play, Clock, Calendar, ArrowLeft, ArrowRight, Flame, Target, Medal, Menu, X } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Search, Bell, Command, BookOpen, Trophy, PieChart, GraduationCap, Award, MessageSquare, Settings, Flag, ChevronRight, Play, Clock, Calendar, ArrowLeft, ArrowRight, Flame, Target, Medal, Menu, X, LogOut, Send, Paperclip, Smile, Plus, Phone, Video, MoreVertical, FileText, ShoppingBag, Graduation } from 'lucide-react';
 import logo from "./logo.png";
 import flagImage from "./flag.png";
 import bgImage from "./bg.jpg";
+import EmojiPicker from 'emoji-picker-react';
+import type { EmojiClickData } from 'emoji-picker-react';
+
+// Add these new types for file handling
+type FileType = 'image' | 'document' | 'pdf';
+
+interface AttachmentType {
+  id: string;
+  file: File;
+  type: FileType;
+  preview?: string;
+}
 
 function App() {
   const [showDetails, setShowDetails] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showMenuTray, setShowMenuTray] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showQuickActions, setShowQuickActions] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [selectedChat, setSelectedChat] = useState<string | null>('Nathael Roy');
+  const [messageInput, setMessageInput] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [messages, setMessages] = useState<Array<{
+    id: number;
+    text: string;
+    sender: 'user' | 'other';
+    time: string;
+    attachments?: Array<{ type: 'image' | 'file'; url: string; name?: string }>;
+  }>>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [chatHistory] = useState<Record<string, Array<{
+    id: number;
+    text: string;
+    sender: 'user' | 'other';
+    time: string;
+    attachments?: Array<{ type: 'image' | 'file'; url: string; name?: string }>;
+  }>>>({
+    'Nathael Roy': [
+      {
+        id: 1,
+        text: "Hello! How can I help you with your studies today?",
+        sender: 'other',
+        time: '09:30'
+      },
+      {
+        id: 2,
+        text: "I need help with the React course materials",
+        sender: 'user',
+        time: '09:31'
+      },
+      {
+        id: 3,
+        text: "Of course! I can help you with React. Which specific topic are you struggling with?",
+        sender: 'other',
+        time: '09:32'
+      }
+    ],
+    'Paris Liana': [
+      {
+        id: 1,
+        text: "Hi! I've reviewed your latest assignment.",
+        sender: 'other',
+        time: '10:15'
+      },
+      {
+        id: 2,
+        text: "Thank you! What do you think about it?",
+        sender: 'user',
+        time: '10:16'
+      }
+    ],
+    'Dr. Sarah Wilson': [
+      {
+        id: 1,
+        text: "Your progress in the course has been exceptional!",
+        sender: 'other',
+        time: '09:45'
+      }
+    ],
+    'Prof. Michael Chen': [
+      {
+        id: 1,
+        text: "Here's the study material for next week's session",
+        sender: 'other',
+        time: '09:15',
+        attachments: [{
+          type: 'file',
+          url: '#',
+          name: 'study_material.pdf'
+        }]
+      }
+    ]
+  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [attachments, setAttachments] = useState<AttachmentType[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [showNotificationTray, setShowNotificationTray] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(3);
 
   const toggleDetails = () => {
     setShowDetails(prev => !prev);
@@ -19,6 +113,152 @@ function App() {
     setIsMobileMenuOpen(prev => !prev);
     setShowDetails(false);
   };
+
+  const toggleChat = () => {
+    setShowChat(prev => !prev);
+  };
+
+  const handleSidebarClick = (section: string) => {
+    setActiveSection(section === activeSection ? null : section);
+  };
+
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    setMessageInput(prev => prev + emojiData.emoji);
+    setShowEmojiPicker(false);
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      handleSendMessage(file);
+    }
+  };
+
+  const getFileType = (file: File): FileType => {
+    if (file.type.startsWith('image/')) return 'image';
+    if (file.type === 'application/pdf') return 'pdf';
+    return 'document';
+  };
+
+  const handleFiles = (files: FileList | null) => {
+    if (!files) return;
+
+    const newAttachments: AttachmentType[] = [];
+    
+    Array.from(files).forEach(file => {
+      // Check file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size should not exceed 10MB');
+        return;
+      }
+
+      const type = getFileType(file);
+      const id = Math.random().toString(36).substr(2, 9);
+
+      // Create preview for images
+      if (type === 'image') {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setAttachments(prev => prev.map(att => 
+            att.id === id ? { ...att, preview: e.target?.result as string } : att
+          ));
+        };
+        reader.readAsDataURL(file);
+      }
+
+      newAttachments.push({
+        id,
+        file,
+        type,
+        preview: type === 'image' ? undefined : undefined
+      });
+    });
+
+    setAttachments(prev => [...prev, ...newAttachments]);
+  };
+
+  const handleSendMessage = (attachment?: File) => {
+    if ((messageInput.trim() || attachment) && selectedChat) {
+      const newMessage = {
+        id: Date.now(),
+        text: messageInput,
+        sender: 'user' as const,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        attachments: attachment ? [{
+          type: attachment.type.startsWith('image/') ? 'image' : 'file',
+          url: URL.createObjectURL(attachment),
+          name: attachment.name
+        }] : undefined
+      };
+      setMessages(prev => [...prev, newMessage]);
+      setMessageInput('');
+      setSelectedFile(null);
+    }
+  };
+
+  const handleLogoClick = () => {
+    setActiveSection(null);
+    setShowDetails(false);
+  };
+
+  const chatList = [
+    { 
+      name: 'Nathael Roy',
+      msg: 'Good Morning!',
+      time: '10:30',
+      img: 'photo-1472099645785-5658abf4ff4e',
+      unread: 2,
+      online: true
+    },
+    { 
+      name: 'Paris Liana',
+      msg: 'Let me check that assignment!',
+      time: '10:30',
+      img: 'photo-1517841905240-472988babdf9',
+      unread: 3,
+      online: true
+    },
+    {
+      name: 'Dr. Sarah Wilson',
+      msg: 'Your progress is impressive...',
+      time: '09:45',
+      img: 'photo-1494790108377-be9c29b29330',
+      unread: 0,
+      online: true
+    },
+    {
+      name: 'Prof. Michael Chen',
+      msg: "Here's the study material for...",
+      time: '09:15',
+      img: 'photo-1507003211169-00dcc994a43e',
+      unread: 1,
+      online: false
+    },
+    {
+      name: 'Emma Thompson',
+      msg: 'Thanks for your help with...',
+      time: 'Yesterday',
+      img: 'photo-1438761681033-6461ffad8d80',
+      unread: 0,
+      online: false
+    },
+    {
+      name: 'David Kumar',
+      msg: 'The group study session is...',
+      time: 'Yesterday',
+      img: 'photo-1500648767791-00dcc994a43e',
+      unread: 0,
+      online: true
+    }
+  ];
+
+  const filteredChatList = useMemo(() => {
+    return chatList.filter(chat => 
+      chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      chat.msg.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [chatList, searchQuery]);
 
   return (
     <div className="flex min-h-screen bg-[#FFF8F6] relative">
@@ -48,45 +288,101 @@ function App() {
           <img 
             src={logo} 
             alt="ViniIAS" 
-            className="w-auto h-auto transform scale-[1.35] -translate-x-2" 
+            className="w-auto h-auto transform scale-[1.35] -translate-x-2 cursor-pointer" 
+            onClick={handleLogoClick}
           />
         </div>
 
         <div className="space-y-3 flex-1">
-          <p className="text-xs text-gray-500 px-2">MENU</p>
-          <button className="sidebar-link active">
+          <p className="text-xs text-gray-500 px-2">DASHBOARD</p>
+          <button 
+            className={`sidebar-link ${activeSection === 'courses' ? 'bg-[#FF6934]/10 text-[#FF6934]' : ''}`} 
+            onClick={() => handleSidebarClick('courses')}
+          >
             <Command size={20} />
-            <span className="text-[15px]">Overview</span>
+            <span className="text-[15px]">My Courses</span>
           </button>
-          <button className="sidebar-link">
-            <BookOpen size={20} />
 
-            <span className="text-[15px]">Lessons</span>
+          <button 
+            className={`sidebar-link relative overflow-hidden group ${activeSection === 'vini-ai' ? 'bg-[#8B5CF6]/10' : ''}`}
+            onClick={() => handleSidebarClick('vini-ai')}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-[#8B5CF6]/10 to-[#A78BFA]/10 rounded-lg"></div>
+            <div className="absolute -right-12 -top-12 w-24 h-24 bg-gradient-to-br from-[#8B5CF6]/20 to-[#A78BFA]/20 rounded-full blur-xl group-hover:scale-150 transition-transform duration-300"></div>
+            <BookOpen size={20} className={`${activeSection === 'vini-ai' ? 'text-[#8B5CF6] scale-110' : 'text-[#8B5CF6]'} group-hover:scale-110 transition-transform duration-300`} />
+            <span className="text-[15px] flex items-center relative">
+              <span className="font-hindi text-[#8B5CF6]">विनी</span>&nbsp;
+              <span className="bg-gradient-to-r from-[#8B5CF6] to-[#A78BFA] bg-clip-text text-transparent font-semibold">AI</span>
+            </span>
+            <span className="absolute right-3 top-2.5 bg-gradient-to-r from-[#8B5CF6] to-[#A78BFA] text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium shadow-lg shadow-purple-500/20">
+              NEW
+            </span>
           </button>
-          <button className="sidebar-link">
+
+          <button 
+            className={`sidebar-link ${activeSection === 'practice' ? 'bg-[#FF6934]/10 text-[#FF6934]' : ''}`}
+            onClick={() => handleSidebarClick('practice')}
+          >
             <Trophy size={20} />
-            <span className="text-[15px]">Leaderboard</span>
+            <span className="text-[15px]">Practice</span>
           </button>
-          <button className="sidebar-link">
+
+          <button 
+            className={`sidebar-link ${activeSection === 'study-material' ? 'bg-[#FF6934]/10 text-[#FF6934]' : ''}`}
+            onClick={() => handleSidebarClick('study-material')}
+          >
             <PieChart size={20} />
-            <span className="text-[15px]">Skill Graph</span>
+            <span className="text-[15px]">Study Material</span>
           </button>
-          <button className="sidebar-link">
-            <GraduationCap size={20} />
-            <span className="text-[15px]">Courses</span>
+
+          <button 
+            className={`sidebar-link relative overflow-hidden group ${activeSection === 'tuition-center' ? 'bg-[#FF6934]/10' : ''}`}
+            onClick={() => handleSidebarClick('tuition-center')}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-[#FF6934]/10 to-[#FF8B34]/10 rounded-lg"></div>
+            <div className="absolute -right-12 -top-12 w-24 h-24 bg-gradient-to-br from-[#FF6934]/20 to-[#FF8B34]/20 rounded-full blur-xl group-hover:scale-150 transition-transform duration-300"></div>
+            <GraduationCap size={20} className={`${activeSection === 'tuition-center' ? 'text-[#FF6934] scale-110' : 'text-[#FF6934]'} group-hover:scale-110 transition-transform duration-300`} />
+            <span className="text-[15px] relative">
+              <span className="bg-gradient-to-r from-[#FF6934] to-[#FF8B34] bg-clip-text text-transparent font-semibold">Tution Center</span>
+            </span>
+            <span className="absolute right-3 top-2.5 bg-gradient-to-r from-[#FF6934] to-[#FF8B34] text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium shadow-lg shadow-orange-500/20">
+              NEW
+            </span>
           </button>
-          <button className="sidebar-link">
-            <Award size={20} />
-            <span className="text-[15px]">Certificates</span>
-          </button>
-          <button className="sidebar-link relative">
+          <button 
+            className={`sidebar-link ${activeSection === 'chat' ? 'bg-[#FF6934]/10 text-[#FF6934]' : ''}`}
+            onClick={() => handleSidebarClick('chat')}
+          >
             <MessageSquare size={20} />
-            <span className="text-[15px]">Messages</span>
-            <span className="absolute right-3 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">5</span>
+            <span className="text-[15px]">Chat</span>
           </button>
-          <button className="sidebar-link">
+          <button 
+            className={`sidebar-link ${activeSection === 'scholarship' ? 'bg-[#FF6934]/10 text-[#FF6934]' : ''}`}
+            onClick={() => handleSidebarClick('scholarship')}
+          >
+            <Award size={20} />
+            <span className="text-[15px]">Scholarship</span>
+          </button>
+          <button 
+            className={`sidebar-link ${activeSection === 'contact' ? 'bg-[#FF6934]/10 text-[#FF6934]' : ''}`}
+            onClick={() => handleSidebarClick('contact')}
+          >
+            <MessageSquare size={20} />
+            <span className="text-[15px]">Contact us</span>
+          </button>
+          <button 
+            className={`sidebar-link ${activeSection === 'settings' ? 'bg-[#FF6934]/10 text-[#FF6934]' : ''}`}
+            onClick={() => handleSidebarClick('settings')}
+          >
             <Settings size={20} />
             <span className="text-[15px]">Settings</span>
+          </button>
+          <button 
+            className={`sidebar-link ${activeSection === 'logout' ? 'bg-[#FF6934]/10 text-[#FF6934]' : ''}`}
+            onClick={() => handleSidebarClick('logout')}
+          >
+            <LogOut size={20} />
+            <span className="text-[15px]">Logout</span>
           </button>
         </div>
 
@@ -116,17 +412,19 @@ function App() {
                 <h3 className="font-semibold text-[15px] mb-2">Get Premium Now!</h3>
                 <p className="text-[13px] text-white/90 mb-5">Reach our special feature by subscribe our plan.</p>
                 <button className="w-full bg-white text-[#FF6934] px-4 py-2.5 rounded-lg text-[13px] font-medium flex items-center justify-center gap-1.5 hover:bg-opacity-90 transition-colors group">
-                  Upgrade Now
+      Upgrade Now
                   <ChevronRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-                </button>
-              </div>
-            </div>
+    </button>
+  </div>
+</div>
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className={`flex-1 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 w-full ${showDetails ? 'lg:max-w-[calc(100%-600px)]' : ''}`}>
+      <main className={`flex-1 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 w-full ${
+        showDetails ? 'lg:max-w-[calc(100%-600px)]' : 'lg:max-w-[calc(100%-580px)]'
+      }`}>
         {/* Header */}
         <header className="header flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-16 sm:pt-0 mb-8">
           <h1 className="text-2xl font-semibold">Dashboard</h1>
@@ -140,131 +438,100 @@ function App() {
               />
             </div>
             <div className="header-actions flex items-center gap-3 sm:gap-4">
-              {/* Only show these buttons when profile is not open */}
-              {!showDetails && (
-                <>
-                  <button className="hidden sm:flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-white border border-[#E2E8F0] shadow-sm hover:shadow-lg hover:scale-[1.02] text-[#3B82F6] group relative transition-all duration-300 ease-out overflow-hidden">
-                    {/* Modern blue gradient overlay on hover */}
-                    <div className="absolute inset-0 bg-[linear-gradient(110deg,#3B82F6,#60A5FA,#93C5FD)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out"></div>
-                    
-                    {/* Icon wrapper with background */}
-                    <div className="relative z-10 p-1.5 rounded-lg bg-blue-50 group-hover:bg-white/10 transition-colors duration-300">
-                      <MessageSquare size={18} className="text-blue-500 transition-all duration-300 group-hover:rotate-12 group-hover:text-white" />
-                    </div>
-                    
-                    {/* Text content */}
-                    <span className="relative z-10 font-medium text-sm group-hover:text-white transition-colors duration-300">Ask A Mentor</span>
-                  </button>
+              {/* Notification Button */}
+              <div className="relative">
+                <button 
+                  onClick={() => setShowNotificationTray(!showNotificationTray)}
+                  className="relative p-2 hover:bg-gray-50 rounded-full transition-colors"
+                >
+                  <Bell size={20} className="text-gray-600" />
+                  {unreadNotifications > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#FF6934] text-white text-[11px] font-medium rounded-full flex items-center justify-center">
+                      {unreadNotifications}
+                    </span>
+                  )}
+                </button>
 
-                  <button className="hidden sm:flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-white border border-[#E2E8F0] shadow-sm hover:shadow-lg hover:scale-[1.02] text-[#8B5CF6] group relative transition-all duration-300 ease-out overflow-hidden">
-                    {/* Modern purple gradient overlay on hover */}
-                    <div className="absolute inset-0 bg-[linear-gradient(110deg,#8B5CF6,#A78BFA,#C4B5FD)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out"></div>
-                    
-                    {/* Icon wrapper with background */}
-                    <div className="relative z-10 p-1.5 rounded-lg bg-purple-50 group-hover:bg-white/10 transition-colors duration-300">
-                      <BookOpen size={18} className="text-purple-500 transition-all duration-300 group-hover:rotate-12 group-hover:text-white" />
-                    </div>
-                    
-                    {/* Text content */}
-                    <span className="relative z-10 font-medium text-sm group-hover:text-white transition-colors duration-300">Submit Assignment</span>
-                  </button>
+                {/* Notification Tray */}
+                {showNotificationTray && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowNotificationTray(false)}
+                    ></div>
+                    <div className="absolute right-0 top-full mt-2 w-[380px] bg-white rounded-xl shadow-lg border border-gray-100 z-50">
+                      <div className="p-4 border-b border-gray-100">
+                        <div className="flex items-center justify-between mb-1">
+                          <h3 className="text-[15px] font-semibold text-gray-900">Notifications</h3>
+                          <button 
+                            onClick={() => {
+                              setUnreadNotifications(0);
+                            }}
+                            className="text-[13px] text-[#FF6934] font-medium hover:text-[#FF8B34]"
+                          >
+                            Mark all as read
+                          </button>
+                        </div>
+                        <p className="text-[13px] text-gray-500">You have {unreadNotifications} unread notifications</p>
+                      </div>
 
-                  {/* Notification button with dropdown */}
-                  <div className="relative">
-                    <button 
-                      onClick={() => setShowNotifications(prev => !prev)}
-                      className="p-2.5 rounded-xl bg-white border border-[#FFE8E0] shadow-sm hover:shadow-lg hover:scale-[1.02] relative transition-all duration-300 group"
-                    >
-                      <Bell size={20} className="text-[#FF6934] group-hover:rotate-12 transition-transform duration-300" />
-                      <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
-                    </button>
-
-                    {/* Notification Dropdown */}
-                    {showNotifications && (
-                      <>
-                        {/* Overlay to close dropdown */}
-                        <div 
-                          className="fixed inset-0 z-40"
-                          onClick={() => setShowNotifications(false)}
-                        ></div>
-                        
-                        {/* Dropdown content */}
-                        <div className="absolute right-0 mt-2 w-[320px] bg-white rounded-xl shadow-lg z-50 overflow-hidden">
-                          <div className="p-4 border-b border-gray-100">
-                            <h3 className="font-semibold text-gray-900">Notifications</h3>
-                          </div>
-                          
-                          {/* Notification items */}
-                          <div className="max-h-[400px] overflow-y-auto">
-                            {/* Message notification */}
-                            <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100">
-                              <div className="flex items-start gap-3">
-                                <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-100">
-                                  <MessageSquare size={18} className="text-white" />
-                                </div>
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium text-gray-900">New message from mentor</p>
-                                  <p className="text-xs text-gray-500 mt-1">Sarah responded to your question about React hooks</p>
-                                  <p className="text-xs text-gray-400 mt-2">2 minutes ago</p>
-                                </div>
-                              </div>
+                      <div className="max-h-[400px] overflow-y-auto">
+                        {/* Recent Notification */}
+                        <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100">
+                          <div className="flex items-start gap-3">
+                            <div className="p-2 rounded-lg bg-gradient-to-r from-[#FF6934] to-[#FF8B34]">
+                              <ShoppingBag size={18} className="text-white" />
                             </div>
-
-                            {/* Assignment notification */}
-                            <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100">
-                              <div className="flex items-start gap-3">
-                                <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-300">
-                                  <BookOpen size={18} className="text-white" />
-                                </div>
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium text-gray-900">Assignment Graded</p>
-                                  <p className="text-xs text-gray-500 mt-1">Your UI/UX project received an A+ grade!</p>
-                                  <p className="text-xs text-gray-400 mt-2">1 hour ago</p>
-                                </div>
-                              </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-900">New in Vini Store</p>
+                              <p className="text-xs text-gray-500 mt-1">Check out our latest study materials!</p>
+                              <p className="text-xs text-gray-400 mt-2">Just now</p>
                             </div>
-
-                            {/* Achievement notification */}
-                            <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100">
-                              <div className="flex items-start gap-3">
-                                <div className="p-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-200">
-                                  <Trophy size={18} className="text-white" />
-                                </div>
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium text-gray-900">New Achievement!</p>
-                                  <p className="text-xs text-gray-500 mt-1">You've completed 5 courses this month</p>
-                                  <p className="text-xs text-gray-400 mt-2">2 hours ago</p>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Course notification */}
-                            <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer">
-                              <div className="flex items-start gap-3">
-                                <div className="p-2 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-200">
-                                  <Play size={18} className="text-white" />
-                                </div>
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium text-gray-900">New Course Available</p>
-                                  <p className="text-xs text-gray-500 mt-1">Advanced JavaScript Patterns is now live</p>
-                                  <p className="text-xs text-gray-400 mt-2">5 hours ago</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* View all button */}
-                          <div className="p-3 bg-gray-50 border-t border-gray-100">
-                            <button className="w-full text-sm text-[#FF6934] font-medium hover:text-[#FF8B34] transition-colors">
-                              View All Notifications
-                            </button>
+                            <div className="w-2 h-2 rounded-full bg-[#FF6934] mt-2"></div>
                           </div>
                         </div>
-                      </>
-                    )}
-                  </div>
-                </>
-              )}
+
+                        {/* SkillYaari Notification */}
+                        <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100">
+                          <div className="flex items-start gap-3">
+                            <div className="p-2 rounded-lg bg-gradient-to-r from-[#10B981] to-[#34D399]">
+                              <Graduation size={18} className="text-white" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-900">New Skill Course Available</p>
+                              <p className="text-xs text-gray-500 mt-1">Master public speaking with our new course</p>
+                              <p className="text-xs text-gray-400 mt-2">2 hours ago</p>
+                            </div>
+                            <div className="w-2 h-2 rounded-full bg-[#FF6934] mt-2"></div>
+                          </div>
+                        </div>
+
+                        {/* More notifications... */}
+                        <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+                          <div className="flex items-start gap-3">
+                            <div className="p-2 rounded-lg bg-gradient-to-r from-[#8B5CF6] to-[#A78BFA]">
+                              <BookOpen size={18} className="text-white" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-900">Assignment Due Soon</p>
+                              <p className="text-xs text-gray-500 mt-1">Complete your pending assignment</p>
+                              <p className="text-xs text-gray-400 mt-2">1 day ago</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-3 bg-gray-50 border-t border-gray-100 rounded-b-xl">
+                        <button className="w-full text-center text-[#FF6934] text-sm font-medium hover:text-[#FF8B34] transition-colors">
+                          View All Notifications
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Profile Button */}
               <button onClick={toggleDetails} className="cursor-pointer transition-transform hover:scale-[1.02] duration-300">
                 <img
                   src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop"
@@ -440,9 +707,138 @@ function App() {
         </section>
       </main>
 
+      {/* Right Quick Actions & Notifications Sidebar */}
+      <aside className={`hidden lg:flex w-[320px] bg-gradient-to-b from-white to-[#FEFEFE] shadow-sm h-screen overflow-y-auto border-l border-gray-100 ${
+        showDetails ? 'lg:hidden' : ''
+      }`}>
+        <div className="w-full flex flex-col">
+          {/* Quick Actions Section */}
+          <div className="p-5 border-b border-gray-100">
+            <h3 className="text-[15px] font-semibold text-gray-900 mb-4">Quick Actions</h3>
+            
+            {/* Submit Assignment Button */}
+            <button className="w-full bg-gradient-to-br from-white to-[#FEFEFE] p-3.5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group mb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gradient-to-r from-[#8B5CF6] to-[#A78BFA] text-white group-hover:scale-110 transition-transform duration-200">
+                  <BookOpen size={20} />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-[15px] text-gray-900">Submit Assignment</h3>
+                  <p className="text-[13px] text-gray-500">Upload your work</p>
+                </div>
+              </div>
+            </button>
+
+            {/* Ask a Mentor Button */}
+            <button className="w-full bg-gradient-to-br from-white to-[#FEFEFE] p-3.5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group mb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] text-white group-hover:scale-110 transition-transform duration-200">
+                  <MessageSquare size={20} />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-[15px] text-gray-900">Ask a Mentor</h3>
+                  <p className="text-[13px] text-gray-500">Get expert guidance</p>
+                </div>
+              </div>
+            </button>
+
+            {/* Vini Store Button */}
+            <button className="w-full bg-gradient-to-br from-white to-[#FEFEFE] p-3.5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group mb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gradient-to-r from-[#FF6934] to-[#FF8B34] text-white group-hover:scale-110 transition-transform duration-200">
+                  <ShoppingBag size={20} />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-[15px] text-gray-900">Vini Store</h3>
+                  <p className="text-[13px] text-gray-500">Shop study materials</p>
+                </div>
+              </div>
+            </button>
+
+            {/* SkillYaari Button */}
+            <button className="w-full bg-gradient-to-br from-white to-[#FEFEFE] p-3.5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gradient-to-r from-[#10B981] to-[#34D399] text-white group-hover:scale-110 transition-transform duration-200">
+                  <Graduation size={20} />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-[15px] text-gray-900">SkillYaari</h3>
+                  <p className="text-[13px] text-gray-500">Enhance your skills</p>
+                </div>
+              </div>
+            </button>
+          </div>
+
+          {/* Notifications Section */}
+          <div className="flex-1 overflow-hidden flex flex-col">
+            <div className="p-5 border-b border-gray-100">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-[15px] font-semibold text-gray-900">Notifications</h3>
+                <span className="text-[13px] text-[#FF6934] font-medium cursor-pointer hover:text-[#FF8B34]">
+                  Mark all as read
+                </span>
+              </div>
+              <p className="text-[13px] text-gray-500">You have 3 unread messages</p>
+            </div>
+
+            {/* Notifications List */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-100">
+                    <MessageSquare size={18} className="text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">New message from mentor</p>
+                    <p className="text-xs text-gray-500 mt-1">Sarah responded to your question about React hooks</p>
+                    <p className="text-xs text-gray-400 mt-2">2 minutes ago</p>
+                  </div>
+                  <div className="w-2 h-2 rounded-full bg-[#FF6934] mt-2"></div>
+                </div>
+              </div>
+
+              <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-300">
+                    <BookOpen size={18} className="text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">Assignment Graded</p>
+                    <p className="text-xs text-gray-500 mt-1">Your UI/UX project received an A+ grade!</p>
+                    <p className="text-xs text-gray-400 mt-2">1 hour ago</p>
+                  </div>
+                  <div className="w-2 h-2 rounded-full bg-[#FF6934] mt-2"></div>
+                </div>
+              </div>
+
+              <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-200">
+                    <Play size={18} className="text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">New Course Available</p>
+                    <p className="text-xs text-gray-500 mt-1">Advanced JavaScript Patterns is now live</p>
+                    <p className="text-xs text-gray-400 mt-2">5 hours ago</p>
+                  </div>
+                  <div className="w-2 h-2 rounded-full bg-[#FF6934] mt-2"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* View All Link */}
+            <div className="p-4 bg-gray-50 border-t border-gray-100">
+              <button className="w-full text-center text-[#FF6934] text-sm font-medium hover:text-[#FF8B34] transition-colors">
+                View All Notifications
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
       {/* Profile Details Sidebar */}
       {showDetails && (
-        <aside className={`fixed lg:static w-full sm:w-[320px] lg:w-[320px] bg-gradient-to-b from-white to-[#FEFEFE] shadow-sm h-full overflow-y-auto transition-transform duration-300 lg:translate-x-0 top-0 right-0 z-50 ${showDetails ? 'translate-x-0' : 'translate-x-full'}`}>
+        <aside className="fixed lg:static w-full sm:w-[320px] lg:w-[320px] bg-gradient-to-b from-white to-[#FEFEFE] shadow-sm h-screen overflow-y-auto border-l border-gray-100 top-0 right-0 z-50">
           {/* Header */}
           <div className="flex items-center gap-2 py-3.5 px-4 border-b border-gray-100 bg-white">
             <button 
@@ -522,7 +918,7 @@ function App() {
                 </div>
               ))}
             </div>
-          </div>
+            </div>
 
           {/* Courses Section */}
           <div className="grid grid-cols-2 gap-3 p-4 bg-white border-t border-gray-50">
@@ -585,6 +981,357 @@ function App() {
             </div>
           </div>
         </aside>
+      )}
+
+      {/* Chat Interface */}
+      {activeSection === 'chat' && (
+        <div className="fixed top-0 right-0 bottom-0 left-[280px] bg-gradient-to-br from-white to-gray-50/50 z-40">
+          {/* Add Close Button */}
+          <button 
+            onClick={() => setActiveSection(null)} 
+            className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md hover:bg-gray-50"
+          >
+            <X size={20} className="text-gray-600" />
+          </button>
+
+          <div className="flex h-full">
+            {/* Chat List Sidebar */}
+            <div className="w-[300px] bg-white border-r border-gray-100 flex flex-col">
+              {/* Chat Header */}
+              <div className="p-6 border-b border-gray-100">
+                <h2 className="text-xl font-semibold mb-4">Chat</h2>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search contacts or messages..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-full bg-gray-50 border-none focus:outline-none focus:ring-2 focus:ring-[#FF6934]/20 text-sm"
+                  />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  {searchQuery && (
+                    <button 
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+              </div>
+            </div>
+
+              {/* Tabs */}
+              <div className="flex p-1 mx-4 mt-4 bg-gray-50 rounded-full">
+                <button className="flex-1 py-2 px-4 text-sm font-medium rounded-full bg-white text-gray-900 shadow-sm">
+                  Instructors
+                </button>
+                <button className="flex-1 py-2 px-4 text-sm font-medium text-gray-500 hover:text-gray-700">
+                  Peers
+                </button>
+              </div>
+
+              {/* Chat List */}
+              <div className="flex-1 overflow-y-auto mt-4">
+                {filteredChatList.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <p className="text-sm">No contacts found</p>
+                  </div>
+                ) : (
+                  filteredChatList.map((chat, i) => (
+                    <div 
+                      key={i}
+                      onClick={() => setSelectedChat(chat.name)}
+                      className={`p-4 cursor-pointer transition-all ${
+                        selectedChat === chat.name 
+                          ? 'bg-[#FF6934]/5 border-l-4 border-[#FF6934]' 
+                          : 'hover:bg-gray-50 border-l-4 border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <img
+                            src={`https://images.unsplash.com/${chat.img}?w=40&h=40&fit=crop`}
+                            alt={chat.name}
+                            className="w-12 h-12 rounded-full"
+                          />
+                          {chat.online && (
+                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full ring-2 ring-white"></div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-semibold text-[15px] text-gray-900 truncate">{chat.name}</h3>
+                            <span className="text-[12px] text-gray-500">{chat.time}</span>
+                          </div>
+                          <div className="flex items-center justify-between mt-1">
+                            <p className="text-[13px] text-gray-500 truncate">{chat.msg}</p>
+                            {chat.unread && (
+                              <span className="ml-2 bg-[#FF6934] text-white text-[11px] font-medium h-5 w-5 flex items-center justify-center rounded-full">
+                                {chat.unread}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* New Chat Button */}
+              <div className="p-4">
+                <button className="w-12 h-12 rounded-full bg-gradient-to-r from-[#FF6934] to-[#FF8B34] text-white flex items-center justify-center hover:shadow-lg hover:shadow-orange-500/30 transition-shadow">
+                  <Plus size={24} />
+                </button>
+              </div>
+            </div>
+
+            {/* Chat Area */}
+            <div className="flex-1 flex flex-col bg-white">
+              {/* Chat Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <img
+                      src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop"
+                      alt="Chat User"
+                      className="w-10 h-10 rounded-full"
+                    />
+                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full ring-2 ring-white"></div>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-[15px] text-gray-900">Nathael Roy</h3>
+                    <p className="text-[13px] text-gray-500">Online</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button className="p-2 hover:bg-gray-100 rounded-full">
+                    <Phone className="text-gray-400" size={20} />
+                  </button>
+                  <button className="p-2 hover:bg-gray-100 rounded-full">
+                    <Video className="text-gray-400" size={20} />
+                  </button>
+                  <button className="p-2 hover:bg-gray-100 rounded-full">
+                    <MoreVertical className="text-gray-400" size={20} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Messages Area */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Time Separator */}
+                <div className="flex items-center justify-center">
+                  <span className="text-xs text-gray-400 bg-white px-3">Today</span>
+                  <div className="h-px bg-gray-100 flex-1"></div>
+                </div>
+
+                {/* Display chat history for selected chat */}
+                {selectedChat && chatHistory[selectedChat]?.map(message => (
+                  <div key={message.id} className={`flex items-start gap-3 ${
+                    message.sender === 'user' ? 'justify-end' : ''
+                  }`}>
+                    {message.sender !== 'user' && (
+                      <img
+                        src={`https://images.unsplash.com/${
+                          chatList.find(chat => chat.name === selectedChat)?.img
+                        }?w=32&h=32&fit=crop`}
+                        alt="User"
+                        className="w-8 h-8 rounded-full"
+                      />
+                    )}
+                    <div>
+                      <div className={`${
+                        message.sender === 'user' 
+                          ? 'bg-[#FF6934] text-white' 
+                          : 'bg-gray-50 text-gray-800'
+                      } p-3 rounded-2xl ${
+                        message.sender === 'user' ? 'rounded-tr-none' : 'rounded-tl-none'
+                      } max-w-[420px]`}>
+                        {message.attachments?.map((attachment, index) => (
+                          <div key={index} className="mb-2">
+                            {attachment.type === 'image' ? (
+                              <img 
+                                src={attachment.url} 
+                                alt="Attachment" 
+                                className="rounded-lg max-w-full h-auto"
+                              />
+                            ) : (
+                              <div className="flex items-center gap-2 bg-white/10 p-2 rounded-lg">
+                                <FileText size={20} />
+                                <span className="text-sm truncate">{attachment.name}</span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        {message.text && <p className="text-sm">{message.text}</p>}
+                      </div>
+                      <span className={`text-[11px] text-gray-400 mt-1 block ${
+                        message.sender === 'user' ? 'text-right' : ''
+                      }`}>{message.time}</span>
+                    </div>
+                    {message.sender === 'user' && (
+                      <img
+                        src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop"
+                        alt="You"
+                        className="w-8 h-8 rounded-full"
+                      />
+                    )}
+                  </div>
+                ))}
+
+                {/* Display new messages */}
+                {messages.map(message => (
+                  <div key={message.id} className={`flex items-start gap-3 ${
+                    message.sender === 'user' ? 'justify-end' : ''
+                  }`}>
+                    {message.sender !== 'user' && (
+                      <img
+                        src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop"
+                        alt="User"
+                        className="w-8 h-8 rounded-full"
+                      />
+                    )}
+                    <div>
+                      <div className={`${
+                        message.sender === 'user' 
+                          ? 'bg-[#FF6934] text-white' 
+                          : 'bg-gray-50 text-gray-800'
+                      } p-3 rounded-2xl ${
+                        message.sender === 'user' ? 'rounded-tr-none' : 'rounded-tl-none'
+                      } max-w-[420px]`}>
+                        {message.attachments?.map((attachment, index) => (
+                          <div key={index} className="mb-2">
+                            {attachment.type === 'image' ? (
+                              <img 
+                                src={attachment.url} 
+                                alt="Attachment" 
+                                className="rounded-lg max-w-full h-auto"
+                              />
+                            ) : (
+                              <div className="flex items-center gap-2 bg-white/10 p-2 rounded-lg">
+                                <FileText size={20} />
+                                <span className="text-sm truncate">{attachment.name}</span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        {message.text && <p className="text-sm">{message.text}</p>}
+                      </div>
+                      <span className={`text-[11px] text-gray-400 mt-1 block ${
+                        message.sender === 'user' ? 'text-right' : ''
+                      }`}>{message.time}</span>
+                    </div>
+                    {message.sender === 'user' && (
+                      <img
+                        src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop"
+                        alt="You"
+                        className="w-8 h-8 rounded-full"
+                      />
+                    )}
+                </div>
+              ))}
+              </div>
+
+              {/* Chat Input */}
+              <div className="p-4 border-t border-gray-100 relative">
+                <div 
+                  className={`flex items-end gap-3 bg-gray-50 rounded-2xl p-3 ${
+                    isDragging ? 'border-2 border-dashed border-[#FF6934]' : ''
+                  }`}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    handleFiles(e.dataTransfer.files);
+                  }}
+                >
+                  <input
+                    type="file"
+                    id="file-upload"
+                    className="hidden"
+                    onChange={(e) => handleFiles(e.target.files)}
+                    multiple
+                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                  />
+                  <label htmlFor="file-upload" className="cursor-pointer">
+                    <button className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                      <Paperclip className="text-gray-400" size={20} />
+                    </button>
+                  </label>
+                  <div className="flex-1">
+                    <textarea
+                      rows={1}
+                      placeholder="Type a message..."
+                      value={messageInput}
+                      onChange={(e) => setMessageInput(e.target.value)}
+                      className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-sm resize-none"
+                      style={{ height: '28px' }}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <button 
+                        className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      >
+                        <Smile className="text-gray-400" size={20} />
+                      </button>
+                      {showEmojiPicker && (
+                        <div className="absolute bottom-12 right-0 z-50">
+                          <EmojiPicker onEmojiClick={onEmojiClick} />
+                        </div>
+                      )}
+                    </div>
+                    <button 
+                      onClick={() => handleSendMessage()}
+                      className="p-2 bg-[#FF6934] text-white rounded-xl hover:shadow-lg hover:shadow-orange-500/30 transition-shadow"
+                    >
+                      <Send size={20} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Attachment Preview */}
+                {attachments.length > 0 && (
+                  <div className="mt-2 p-2 bg-white rounded-lg border border-gray-200">
+                    <div className="flex flex-wrap gap-2">
+                      {attachments.map(attachment => (
+                        <div key={attachment.id} className="relative group">
+                          {attachment.type === 'image' ? (
+                            <div className="w-16 h-16 rounded-lg overflow-hidden">
+                              <img 
+                                src={attachment.preview} 
+                                alt="Preview" 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-16 h-16 rounded-lg bg-gray-50 flex items-center justify-center">
+                              <FileText size={24} className="text-gray-400" />
+                            </div>
+                          )}
+                          <button 
+                            onClick={() => setAttachments(prev => prev.filter(a => a.id !== attachment.id))}
+                            className="absolute -top-2 -right-2 bg-white rounded-full shadow-md p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X size={14} className="text-gray-600" />
+                          </button>
+                          <span className="absolute bottom-0 left-0 right-0 text-[10px] text-center bg-black/50 text-white truncate px-1">
+                            {attachment.file.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
