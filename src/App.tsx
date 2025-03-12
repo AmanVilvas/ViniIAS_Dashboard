@@ -1,5 +1,43 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Bell, Command, BookOpen, Trophy, PieChart, GraduationCap, Award, MessageSquare, Settings, Flag, ChevronRight, Play, Clock, Calendar, ArrowLeft, ArrowRight, Flame, Target, Medal, Menu, X, LogOut, Send, Paperclip, Smile, Plus, Phone, Video, MoreVertical, FileText, ShoppingBag, Graduation } from 'lucide-react';
+import { 
+  Search, 
+  Bell, 
+  Command, 
+  BookOpen, 
+  Trophy, 
+  PieChart, 
+  GraduationCap, 
+  Award, 
+  MessageSquare, 
+  Settings, 
+  Flag, 
+  ChevronRight, 
+  Play, 
+  Clock, 
+  Calendar, 
+  ArrowLeft, 
+  ArrowRight, 
+  Flame, 
+  Target, 
+  Medal, 
+  Menu, 
+  X, 
+  LogOut, 
+  Send, 
+  Paperclip, 
+  Smile, 
+  Plus, 
+  Phone, 
+  Video, 
+  MoreVertical, 
+  FileText, 
+  ShoppingBag,
+  ChevronLeft,
+  Users,
+  Download,
+  Upload,
+  Calculator
+} from 'lucide-react';
 import logo from "./logo.png";
 import flagImage from "./flag.png";
 import bgImage from "./bg.jpg";
@@ -103,6 +141,28 @@ function App() {
   const [isDragging, setIsDragging] = useState(false);
   const [showNotificationTray, setShowNotificationTray] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(3);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const slides = [
+    {
+      title: "PWSAT",
+      subtitle: "Win upto 90% Scholarship",
+      duration: "90 mins",
+      enrolledCount: "7k+ students already enrolled",
+      image: "path_to_pwsat_image.jpg" // You'll need to add this image
+    },
+    // Add more slides as needed
+  ];
+
+  // First, add this new state for the assignment upload modal
+  const [showAssignmentModal, setShowAssignmentModal] = useState(false);
+  const [assignmentFiles, setAssignmentFiles] = useState<AttachmentType[]>([]);
+  const [assignmentDragging, setAssignmentDragging] = useState(false);
+
+  // Add this state at the beginning of your App component, where other states are defined
+  const [showCoursesTray, setShowCoursesTray] = useState(false);
+
+  // Add this with other state declarations at the top
+  const [showStudyToolsTray, setShowStudyToolsTray] = useState(false);
 
   const toggleDetails = () => {
     setShowDetails(prev => !prev);
@@ -260,8 +320,54 @@ function App() {
     );
   }, [chatList, searchQuery]);
 
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  };
+
+  // Add this new function to handle assignment files
+  const handleAssignmentFiles = (files: FileList | null) => {
+    if (!files) return;
+
+    const newFiles: AttachmentType[] = [];
+    
+    Array.from(files).forEach(file => {
+      // Check file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size should not exceed 10MB');
+        return;
+      }
+
+      const type = getFileType(file);
+      const id = Math.random().toString(36).substr(2, 9);
+
+      // Create preview for images
+      if (type === 'image') {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setAssignmentFiles(prev => prev.map(att => 
+            att.id === id ? { ...att, preview: e.target?.result as string } : att
+          ));
+        };
+        reader.readAsDataURL(file);
+      }
+
+      newFiles.push({
+        id,
+        file,
+        type,
+        preview: type === 'image' ? undefined : undefined
+      });
+    });
+
+    setAssignmentFiles(prev => [...prev, ...newFiles]);
+  };
+
   return (
-    <div className="flex min-h-screen bg-[#FFF8F6] relative">
+    <div className="flex min-h-screen bg-white">
       {/* Mobile Menu Button */}
       <button 
         onClick={toggleMobileMenu}
@@ -424,12 +530,12 @@ function App() {
       {/* Main Content */}
       <main className={`flex-1 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 w-full ${
         showDetails ? 'lg:max-w-[calc(100%-600px)]' : 'lg:max-w-[calc(100%-580px)]'
-      }`}>
+      } ${activeSection ? 'hidden' : ''}`}>
         {/* Header */}
         <header className="header flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-16 sm:pt-0 mb-8">
           <h1 className="text-2xl font-semibold">Dashboard</h1>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:ml-24">
-            <div className="search-container relative flex-1 w-full max-w-[480px]">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:ml-8">
+            <div className="search-container relative flex-1 w-full max-w-[640px]">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               <input
                 type="text"
@@ -438,6 +544,21 @@ function App() {
               />
             </div>
             <div className="header-actions flex items-center gap-3 sm:gap-4">
+              {/* Vini Store Button */}
+              <button className="flex items-center gap-2.5 bg-[#4B83F7]/90 hover:bg-gradient-to-r hover:from-[#4B83F7] hover:to-[#6366F1] text-white px-6 py-2.5 rounded-lg transition-all duration-300 group">
+                <MessageSquare size={20} className="group-hover:scale-105 transition-transform duration-300" />
+                <span className="text-[0.9375rem] font-medium whitespace-nowrap flex items-center gap-2">
+                  Vini Store
+                  <span className="bg-white text-[#4B83F7] text-[10px] px-1.5 py-0.5 rounded-full font-medium">NEW</span>
+                </span>
+              </button>
+
+              {/* Skill Yaari Button */}
+              <button className="flex items-center gap-2.5 bg-white hover:bg-gradient-to-r hover:from-white hover:to-[#F5F5F9] text-[#6366F1] px-6 py-2.5 rounded-lg transition-all duration-300 border border-[#E5E7EB]/60 group">
+                <BookOpen size={20} className="group-hover:scale-105 transition-transform duration-300" />
+                <span className="text-[0.9375rem] font-medium whitespace-nowrap">Skill Yaari</span>
+              </button>
+
               {/* Notification Button */}
               <div className="relative">
                 <button 
@@ -495,7 +616,7 @@ function App() {
                         <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100">
                           <div className="flex items-start gap-3">
                             <div className="p-2 rounded-lg bg-gradient-to-r from-[#10B981] to-[#34D399]">
-                              <Graduation size={18} className="text-white" />
+                              <GraduationCap size={18} className="text-white" />
                             </div>
                             <div className="flex-1">
                               <p className="text-sm font-medium text-gray-900">New Skill Course Available</p>
@@ -707,17 +828,35 @@ function App() {
         </section>
       </main>
 
-      {/* Right Quick Actions & Notifications Sidebar */}
-      <aside className={`hidden lg:flex w-[320px] bg-gradient-to-b from-white to-[#FEFEFE] shadow-sm h-screen overflow-y-auto border-l border-gray-100 ${
+      {/* Right Quick Actions Sidebar */}
+      <aside className={`hidden lg:flex w-[320px] bg-white shadow-sm h-screen overflow-y-auto border-l border-gray-100 ${
         showDetails ? 'lg:hidden' : ''
-      }`}>
+      } ${activeSection ? 'hidden' : ''}`}>
         <div className="w-full flex flex-col">
           {/* Quick Actions Section */}
-          <div className="p-5 border-b border-gray-100">
+          <div className="p-5">
             <h3 className="text-[15px] font-semibold text-gray-900 mb-4">Quick Actions</h3>
             
+            {/* Vini Store Button */}
+            <button className="w-full bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 group mb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] text-white group-hover:scale-110 transition-transform duration-200">
+                  <MessageSquare size={20} />
+                </div>
+                <div className="text-left flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-[15px] text-gray-900">Ask a Mentor</h3>
+                  </div>
+                  <p className="text-[13px] text-gray-500">Get expert guidance</p>
+                </div>
+              </div>
+            </button>
+
             {/* Submit Assignment Button */}
-            <button className="w-full bg-gradient-to-br from-white to-[#FEFEFE] p-3.5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group mb-3">
+            <button 
+              onClick={() => setShowAssignmentModal(true)}
+              className="w-full bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 group mb-3"
+            >
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-gradient-to-r from-[#8B5CF6] to-[#A78BFA] text-white group-hover:scale-110 transition-transform duration-200">
                   <BookOpen size={20} />
@@ -729,108 +868,85 @@ function App() {
               </div>
             </button>
 
-            {/* Ask a Mentor Button */}
-            <button className="w-full bg-gradient-to-br from-white to-[#FEFEFE] p-3.5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group mb-3">
+            {/* Live Classes Button */}
+            <button className="w-full bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 group mb-3">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] text-white group-hover:scale-110 transition-transform duration-200">
-                  <MessageSquare size={20} />
+                <div className="p-2 rounded-lg bg-gradient-to-r from-[#EF4444] to-[#F87171] text-white group-hover:scale-110 transition-transform duration-200">
+                  <Video size={20} />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-semibold text-[15px] text-gray-900">Ask a Mentor</h3>
-                  <p className="text-[13px] text-gray-500">Get expert guidance</p>
+                  <h3 className="font-semibold text-[15px] text-gray-900">Live Classes</h3>
+                  <p className="text-[13px] text-gray-500">Join interactive sessions</p>
                 </div>
               </div>
             </button>
 
-            {/* Vini Store Button */}
-            <button className="w-full bg-gradient-to-br from-white to-[#FEFEFE] p-3.5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group mb-3">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-gradient-to-r from-[#FF6934] to-[#FF8B34] text-white group-hover:scale-110 transition-transform duration-200">
-                  <ShoppingBag size={20} />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-semibold text-[15px] text-gray-900">Vini Store</h3>
-                  <p className="text-[13px] text-gray-500">Shop study materials</p>
-                </div>
-              </div>
-            </button>
-
-            {/* SkillYaari Button */}
-            <button className="w-full bg-gradient-to-br from-white to-[#FEFEFE] p-3.5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group">
+            {/* Study Tool Button */}
+            <button 
+              onClick={() => setShowStudyToolsTray(true)}
+              className="w-full bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 group mb-3"
+            >
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-gradient-to-r from-[#10B981] to-[#34D399] text-white group-hover:scale-110 transition-transform duration-200">
-                  <Graduation size={20} />
+                  <BookOpen size={20} />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-semibold text-[15px] text-gray-900">SkillYaari</h3>
-                  <p className="text-[13px] text-gray-500">Enhance your skills</p>
+                  <h3 className="font-semibold text-[15px] text-gray-900">Study Tool</h3>
+                  <p className="text-[13px] text-gray-500">Access learning resources</p>
                 </div>
               </div>
             </button>
           </div>
 
-          {/* Notifications Section */}
-          <div className="flex-1 overflow-hidden flex flex-col">
-            <div className="p-5 border-b border-gray-100">
-              <div className="flex items-center justify-between mb-1">
-                <h3 className="text-[15px] font-semibold text-gray-900">Notifications</h3>
-                <span className="text-[13px] text-[#FF6934] font-medium cursor-pointer hover:text-[#FF8B34]">
-                  Mark all as read
-                </span>
-              </div>
-              <p className="text-[13px] text-gray-500">You have 3 unread messages</p>
-            </div>
-
-            {/* Notifications List */}
-            <div className="flex-1 overflow-y-auto">
-              <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-100">
-                    <MessageSquare size={18} className="text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">New message from mentor</p>
-                    <p className="text-xs text-gray-500 mt-1">Sarah responded to your question about React hooks</p>
-                    <p className="text-xs text-gray-400 mt-2">2 minutes ago</p>
-                  </div>
-                  <div className="w-2 h-2 rounded-full bg-[#FF6934] mt-2"></div>
-                </div>
-              </div>
-
-              <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-300">
-                    <BookOpen size={18} className="text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">Assignment Graded</p>
-                    <p className="text-xs text-gray-500 mt-1">Your UI/UX project received an A+ grade!</p>
-                    <p className="text-xs text-gray-400 mt-2">1 hour ago</p>
-                  </div>
-                  <div className="w-2 h-2 rounded-full bg-[#FF6934] mt-2"></div>
-                </div>
-              </div>
-
-              <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-200">
-                    <Play size={18} className="text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">New Course Available</p>
-                    <p className="text-xs text-gray-500 mt-1">Advanced JavaScript Patterns is now live</p>
-                    <p className="text-xs text-gray-400 mt-2">5 hours ago</p>
-                  </div>
-                  <div className="w-2 h-2 rounded-full bg-[#FF6934] mt-2"></div>
-                </div>
-              </div>
-            </div>
-
-            {/* View All Link */}
-            <div className="p-4 bg-gray-50 border-t border-gray-100">
-              <button className="w-full text-center text-[#FF6934] text-sm font-medium hover:text-[#FF8B34] transition-colors">
-                View All Notifications
+          {/* Upcoming Courses Section */}
+          <div className="p-5 border-t border-gray-100">
+            <div className="flex items-center justify-between">
+              <h3 className="text-[15px] font-semibold text-gray-900">Upcoming Courses</h3>
+              <button 
+                onClick={() => setShowCoursesTray(true)}
+                className="text-[13px] text-[#FF6934] font-medium hover:text-[#FF8B34]"
+              >
+                View All
               </button>
+            </div>
+          </div>
+
+          {/* Quick Access Links */}
+          <div className="p-5 border-t border-gray-100">
+            <h3 className="text-[15px] font-semibold text-gray-900 mb-4">Quick Access Links</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <button className="p-3 text-center bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <span className="text-[13px] font-medium">Study Material</span>
+              </button>
+              <button className="p-3 text-center bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <span className="text-[13px] font-medium">Practice Tests</span>
+              </button>
+              <button className="p-3 text-center bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <span className="text-[13px] font-medium">Results</span>
+              </button>
+              <button className="p-3 text-center bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <span className="text-[13px] font-medium">Schedule</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Download App Section */}
+          <div className="mt-auto p-5 border-t border-gray-100">
+            <div className="bg-gradient-to-r from-[#1D1B48] to-[#2E2B5F] rounded-xl p-5 text-white">
+              <h3 className="font-semibold text-[15px] mb-3">Download our App</h3>
+              <p className="text-[13px] text-gray-200 mb-4">Get access to exclusive features on our mobile app</p>
+              <div className="flex items-center gap-3">
+                <img 
+                  src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" 
+                  alt="Play Store" 
+                  className="h-8"
+                />
+                <img 
+                  src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" 
+                  alt="App Store" 
+                  className="h-8"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -983,6 +1099,71 @@ function App() {
         </aside>
       )}
 
+      {/* Section Windows */}
+      {activeSection && activeSection !== 'chat' && activeSection !== 'scholarship' && (
+        <div className="fixed top-0 right-0 bottom-0 left-[280px] bg-gradient-to-br from-white to-gray-50/50 z-40">
+          {/* Close Button */}
+          <button 
+            onClick={() => setActiveSection(null)} 
+            className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md hover:bg-gray-50"
+          >
+            <X size={20} className="text-gray-600" />
+          </button>
+
+          <div className="h-full overflow-y-auto p-6">
+            {/* Content for each section */}
+            {activeSection === 'courses' && (
+              <div>
+                <h1 className="text-2xl font-semibold mb-4">My Courses</h1>
+                {/* Add your courses content here */}
+              </div>
+            )}
+
+            {activeSection === 'vini-ai' && (
+              <div>
+                <h1 className="text-2xl font-semibold mb-4">VINI AI</h1>
+                {/* Add your VINI AI content here */}
+              </div>
+            )}
+
+            {activeSection === 'practice' && (
+              <div>
+                <h1 className="text-2xl font-semibold mb-4">Practice</h1>
+                {/* Add your practice content here */}
+              </div>
+            )}
+
+            {activeSection === 'study-material' && (
+              <div>
+                <h1 className="text-2xl font-semibold mb-4">Study Material</h1>
+                {/* Add your study material content here */}
+              </div>
+            )}
+
+            {activeSection === 'tuition-center' && (
+              <div>
+                <h1 className="text-2xl font-semibold mb-4">Tuition Center</h1>
+                {/* Add your tuition center content here */}
+              </div>
+            )}
+
+            {activeSection === 'contact' && (
+              <div>
+                <h1 className="text-2xl font-semibold mb-4">Contact Us</h1>
+                {/* Add your contact content here */}
+              </div>
+            )}
+
+            {activeSection === 'settings' && (
+              <div>
+                <h1 className="text-2xl font-semibold mb-4">Settings</h1>
+                {/* Add your settings content here */}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Chat Interface */}
       {activeSection === 'chat' && (
         <div className="fixed top-0 right-0 bottom-0 left-[280px] bg-gradient-to-br from-white to-gray-50/50 z-40">
@@ -1117,221 +1298,668 @@ function App() {
                 </div>
               </div>
 
-              {/* Messages Area */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                {/* Time Separator */}
-                <div className="flex items-center justify-center">
-                  <span className="text-xs text-gray-400 bg-white px-3">Today</span>
-                  <div className="h-px bg-gray-100 flex-1"></div>
-                </div>
-
-                {/* Display chat history for selected chat */}
-                {selectedChat && chatHistory[selectedChat]?.map(message => (
-                  <div key={message.id} className={`flex items-start gap-3 ${
-                    message.sender === 'user' ? 'justify-end' : ''
-                  }`}>
-                    {message.sender !== 'user' && (
-                      <img
-                        src={`https://images.unsplash.com/${
-                          chatList.find(chat => chat.name === selectedChat)?.img
-                        }?w=32&h=32&fit=crop`}
-                        alt="User"
-                        className="w-8 h-8 rounded-full"
-                      />
-                    )}
-                    <div>
-                      <div className={`${
-                        message.sender === 'user' 
-                          ? 'bg-[#FF6934] text-white' 
-                          : 'bg-gray-50 text-gray-800'
-                      } p-3 rounded-2xl ${
-                        message.sender === 'user' ? 'rounded-tr-none' : 'rounded-tl-none'
-                      } max-w-[420px]`}>
-                        {message.attachments?.map((attachment, index) => (
-                          <div key={index} className="mb-2">
-                            {attachment.type === 'image' ? (
-                              <img 
-                                src={attachment.url} 
-                                alt="Attachment" 
-                                className="rounded-lg max-w-full h-auto"
-                              />
-                            ) : (
-                              <div className="flex items-center gap-2 bg-white/10 p-2 rounded-lg">
-                                <FileText size={20} />
-                                <span className="text-sm truncate">{attachment.name}</span>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                        {message.text && <p className="text-sm">{message.text}</p>}
-                      </div>
-                      <span className={`text-[11px] text-gray-400 mt-1 block ${
-                        message.sender === 'user' ? 'text-right' : ''
-                      }`}>{message.time}</span>
-                    </div>
-                    {message.sender === 'user' && (
-                      <img
-                        src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop"
-                        alt="You"
-                        className="w-8 h-8 rounded-full"
-                      />
-                    )}
+              {/* Messages and Input Container */}
+              <div className="flex-1 flex flex-col">
+                {/* Messages Area */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                  {/* Time Separator */}
+                  <div className="flex items-center justify-center">
+                    <span className="text-xs text-gray-400 bg-white px-3">Today</span>
+                    <div className="h-px bg-gray-100 flex-1"></div>
                   </div>
-                ))}
 
-                {/* Display new messages */}
-                {messages.map(message => (
-                  <div key={message.id} className={`flex items-start gap-3 ${
-                    message.sender === 'user' ? 'justify-end' : ''
-                  }`}>
-                    {message.sender !== 'user' && (
-                      <img
-                        src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop"
-                        alt="User"
-                        className="w-8 h-8 rounded-full"
-                      />
-                    )}
-                    <div>
-                      <div className={`${
-                        message.sender === 'user' 
-                          ? 'bg-[#FF6934] text-white' 
-                          : 'bg-gray-50 text-gray-800'
-                      } p-3 rounded-2xl ${
-                        message.sender === 'user' ? 'rounded-tr-none' : 'rounded-tl-none'
-                      } max-w-[420px]`}>
-                        {message.attachments?.map((attachment, index) => (
-                          <div key={index} className="mb-2">
-                            {attachment.type === 'image' ? (
-                              <img 
-                                src={attachment.url} 
-                                alt="Attachment" 
-                                className="rounded-lg max-w-full h-auto"
-                              />
-                            ) : (
-                              <div className="flex items-center gap-2 bg-white/10 p-2 rounded-lg">
-                                <FileText size={20} />
-                                <span className="text-sm truncate">{attachment.name}</span>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                        {message.text && <p className="text-sm">{message.text}</p>}
-                      </div>
-                      <span className={`text-[11px] text-gray-400 mt-1 block ${
-                        message.sender === 'user' ? 'text-right' : ''
-                      }`}>{message.time}</span>
-                    </div>
-                    {message.sender === 'user' && (
-                      <img
-                        src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop"
-                        alt="You"
-                        className="w-8 h-8 rounded-full"
-                      />
-                    )}
-                </div>
-              ))}
-              </div>
-
-              {/* Chat Input */}
-              <div className="p-4 border-t border-gray-100 relative">
-                <div 
-                  className={`flex items-end gap-3 bg-gray-50 rounded-2xl p-3 ${
-                    isDragging ? 'border-2 border-dashed border-[#FF6934]' : ''
-                  }`}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setIsDragging(true);
-                  }}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setIsDragging(false);
-                    handleFiles(e.dataTransfer.files);
-                  }}
-                >
-                  <input
-                    type="file"
-                    id="file-upload"
-                    className="hidden"
-                    onChange={(e) => handleFiles(e.target.files)}
-                    multiple
-                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-                  />
-                  <label htmlFor="file-upload" className="cursor-pointer">
-                    <button className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                      <Paperclip className="text-gray-400" size={20} />
-                    </button>
-                  </label>
-                  <div className="flex-1">
-                    <textarea
-                      rows={1}
-                      placeholder="Type a message..."
-                      value={messageInput}
-                      onChange={(e) => setMessageInput(e.target.value)}
-                      className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-sm resize-none"
-                      style={{ height: '28px' }}
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="relative">
-                      <button 
-                        className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
-                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      >
-                        <Smile className="text-gray-400" size={20} />
-                      </button>
-                      {showEmojiPicker && (
-                        <div className="absolute bottom-12 right-0 z-50">
-                          <EmojiPicker onEmojiClick={onEmojiClick} />
+                  {/* Display chat history for selected chat */}
+                  {selectedChat && chatHistory[selectedChat]?.map(message => (
+                    <div key={message.id} className={`flex items-start gap-3 ${
+                      message.sender === 'user' ? 'justify-end' : ''
+                    }`}>
+                      {message.sender !== 'user' && (
+                        <img
+                          src={`https://images.unsplash.com/${
+                            chatList.find(chat => chat.name === selectedChat)?.img
+                          }?w=32&h=32&fit=crop`}
+                          alt="User"
+                          className="w-8 h-8 rounded-full"
+                        />
+                      )}
+                      <div>
+                        <div className={`${
+                          message.sender === 'user' 
+                            ? 'bg-[#FF6934] text-white' 
+                            : 'bg-gray-50 text-gray-800'
+                        } p-3 rounded-2xl ${
+                          message.sender === 'user' ? 'rounded-tr-none' : 'rounded-tl-none'
+                        } max-w-[420px]`}>
+                          {message.attachments?.map((attachment, index) => (
+                            <div key={index} className="mb-2">
+                              {attachment.type === 'image' ? (
+                                <img 
+                                  src={attachment.url} 
+                                  alt="Attachment" 
+                                  className="rounded-lg max-w-full h-auto"
+                                />
+                              ) : (
+                                <div className="flex items-center gap-2 bg-white/10 p-2 rounded-lg">
+                                  <FileText size={20} />
+                                  <span className="text-sm truncate">{attachment.name}</span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                          {message.text && <p className="text-sm">{message.text}</p>}
                         </div>
+                        <span className={`text-[11px] text-gray-400 mt-1 block ${
+                          message.sender === 'user' ? 'text-right' : ''
+                        }`}>{message.time}</span>
+                      </div>
+                      {message.sender === 'user' && (
+                        <img
+                          src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop"
+                          alt="You"
+                          className="w-8 h-8 rounded-full"
+                        />
                       )}
                     </div>
-                    <button 
-                      onClick={() => handleSendMessage()}
-                      className="p-2 bg-[#FF6934] text-white rounded-xl hover:shadow-lg hover:shadow-orange-500/30 transition-shadow"
-                    >
-                      <Send size={20} />
-                    </button>
-                  </div>
+                  ))}
+
+                  {/* Display new messages */}
+                  {messages.map(message => (
+                    <div key={message.id} className={`flex items-start gap-3 ${
+                      message.sender === 'user' ? 'justify-end' : ''
+                    }`}>
+                      {message.sender !== 'user' && (
+                        <img
+                          src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop"
+                          alt="User"
+                          className="w-8 h-8 rounded-full"
+                        />
+                      )}
+                      <div>
+                        <div className={`${
+                          message.sender === 'user' 
+                            ? 'bg-[#FF6934] text-white' 
+                            : 'bg-gray-50 text-gray-800'
+                        } p-3 rounded-2xl ${
+                          message.sender === 'user' ? 'rounded-tr-none' : 'rounded-tl-none'
+                        } max-w-[420px]`}>
+                          {message.attachments?.map((attachment, index) => (
+                            <div key={index} className="mb-2">
+                              {attachment.type === 'image' ? (
+                                <img 
+                                  src={attachment.url} 
+                                  alt="Attachment" 
+                                  className="rounded-lg max-w-full h-auto"
+                                />
+                              ) : (
+                                <div className="flex items-center gap-2 bg-white/10 p-2 rounded-lg">
+                                  <FileText size={20} />
+                                  <span className="text-sm truncate">{attachment.name}</span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                          {message.text && <p className="text-sm">{message.text}</p>}
+                        </div>
+                        <span className={`text-[11px] text-gray-400 mt-1 block ${
+                          message.sender === 'user' ? 'text-right' : ''
+                        }`}>{message.time}</span>
+                      </div>
+                      {message.sender === 'user' && (
+                        <img
+                          src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop"
+                          alt="You"
+                          className="w-8 h-8 rounded-full"
+                        />
+                      )}
+                    </div>
+                  ))}
                 </div>
 
-                {/* Attachment Preview */}
-                {attachments.length > 0 && (
-                  <div className="mt-2 p-2 bg-white rounded-lg border border-gray-200">
-                    <div className="flex flex-wrap gap-2">
-                      {attachments.map(attachment => (
-                        <div key={attachment.id} className="relative group">
-                          {attachment.type === 'image' ? (
-                            <div className="w-16 h-16 rounded-lg overflow-hidden">
-                              <img 
-                                src={attachment.preview} 
-                                alt="Preview" 
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          ) : (
-                            <div className="w-16 h-16 rounded-lg bg-gray-50 flex items-center justify-center">
-                              <FileText size={24} className="text-gray-400" />
-                            </div>
-                          )}
-                          <button 
-                            onClick={() => setAttachments(prev => prev.filter(a => a.id !== attachment.id))}
-                            className="absolute -top-2 -right-2 bg-white rounded-full shadow-md p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X size={14} className="text-gray-600" />
-                          </button>
-                          <span className="absolute bottom-0 left-0 right-0 text-[10px] text-center bg-black/50 text-white truncate px-1">
-                            {attachment.file.name}
-                          </span>
-                        </div>
-                      ))}
+                {/* Chat Input */}
+                <div className="p-4 border-t border-gray-100 relative">
+                  <div 
+                    className={`flex items-end gap-3 bg-gray-50 rounded-2xl p-3 ${
+                      isDragging ? 'border-2 border-dashed border-[#FF6934]' : ''
+                    }`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragging(true);
+                    }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDragging(false);
+                      handleFiles(e.dataTransfer.files);
+                    }}
+                  >
+                    <input
+                      type="file"
+                      id="file-upload"
+                      className="hidden"
+                      onChange={(e) => handleFiles(e.target.files)}
+                      multiple
+                      accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                    />
+                    <label htmlFor="file-upload" className="cursor-pointer">
+                      <button className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                        <Paperclip className="text-gray-400" size={20} />
+                      </button>
+                    </label>
+                    <div className="flex-1">
+                      <textarea
+                        rows={1}
+                        placeholder="Type a message..."
+                        value={messageInput}
+                        onChange={(e) => setMessageInput(e.target.value)}
+                        className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-sm resize-none"
+                        style={{ height: '28px' }}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <button 
+                          className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                        >
+                          <Smile className="text-gray-400" size={20} />
+                        </button>
+                        {showEmojiPicker && (
+                          <div className="absolute bottom-12 right-0 z-50">
+                            <EmojiPicker onEmojiClick={onEmojiClick} />
+                          </div>
+                        )}
+                      </div>
+                      <button 
+                        onClick={() => handleSendMessage()}
+                        className="p-2 bg-[#FF6934] text-white rounded-xl hover:shadow-lg hover:shadow-orange-500/30 transition-shadow"
+                      >
+                        <Send size={20} />
+                      </button>
                     </div>
                   </div>
-                )}
+
+                  {/* Attachment Preview */}
+                  {attachments.length > 0 && (
+                    <div className="mt-2 p-2 bg-white rounded-lg border border-gray-200">
+                      <div className="flex flex-wrap gap-2">
+                        {attachments.map(attachment => (
+                          <div key={attachment.id} className="relative group">
+                            {attachment.type === 'image' ? (
+                              <div className="w-16 h-16 rounded-lg overflow-hidden">
+                                <img 
+                                  src={attachment.preview} 
+                                  alt="Preview" 
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="w-16 h-16 rounded-lg bg-gray-50 flex items-center justify-center">
+                                <FileText size={24} className="text-gray-400" />
+                              </div>
+                            )}
+                            <button 
+                              onClick={() => setAttachments(prev => prev.filter(a => a.id !== attachment.id))}
+                              className="absolute -top-2 -right-2 bg-white rounded-full shadow-md p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X size={14} className="text-gray-600" />
+                            </button>
+                            <span className="absolute bottom-0 left-0 right-0 text-[10px] text-center bg-black/50 text-white truncate px-1">
+                              {attachment.file.name}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
+      )}
+
+      {/* Scholarship Interface */}
+      {activeSection === 'scholarship' && (
+        <div className="fixed top-0 right-0 bottom-0 left-[280px] bg-white z-40 overflow-y-auto">
+          {/* Close Button */}
+          <button 
+            onClick={() => setActiveSection(null)} 
+            className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md hover:bg-gray-50 z-50"
+          >
+            <X size={20} className="text-gray-600" />
+          </button>
+
+          {/* Hero Section */}
+          <div className="bg-[#1D1B48] h-[400px] relative">
+            <div className="max-w-6xl mx-auto px-8 h-full flex items-center">
+              <div className="flex justify-between items-center w-full">
+                <div className="text-white">
+                  <h1 className="text-5xl font-bold mb-4">PWSAT</h1>
+                  <h2 className="text-3xl font-semibold mb-6">Win upto 90% Scholarship</h2>
+                  <div className="flex items-center gap-6 mb-8">
+                    <div className="flex items-center gap-2">
+                      <Clock size={20} />
+                      <span>Duration: 90 mins</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users size={20} />
+                      <span>7k+ students already enrolled</span>
+                    </div>
+                  </div>
+                  <button className="bg-white text-[#1D1B48] px-8 py-3 rounded-lg font-semibold hover:bg-white/90 transition-colors">
+                    Register for free
+                  </button>
+                </div>
+                <div className="w-[400px]">
+                  <img 
+                    src="/instructor.png" 
+                    alt="Instructor" 
+                    className="w-full h-auto"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Content Section */}
+          <div className="max-w-6xl mx-auto px-8 py-8">
+            {/* Exam Details */}
+            <div className="mb-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold">Exam Details</h2>
+                <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">
+                  <Download size={18} />
+                  Syllabus
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-white p-6 rounded-xl border border-gray-100">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-orange-100 rounded-lg">
+                      <Calendar className="text-[#FF6934]" size={24} />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-2">Exam Dates</h3>
+                      <p className="text-gray-600 text-sm mb-1">
+                        Online: 10th March 2025 to 25th March 2025
+                      </p>
+                      <p className="text-gray-600 text-sm">
+                        Offline: 16th March 2025 & 23rd March 2025
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl border border-gray-100">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-blue-100 rounded-lg">
+                      <Clock className="text-blue-600" size={24} />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-2">Exam Timings</h3>
+                      <p className="text-gray-600 text-sm mb-1">
+                        Online: 12:00 PM to 11:59 PM
+                      </p>
+                      <p className="text-gray-600 text-sm">
+                        Offline: 10:00 AM to 11:00 AM & 04:00 PM to 05:00 PM
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* What is PWSAT */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold mb-4">What is PWSAT</h2>
+              <div className="bg-white p-6 rounded-xl border border-gray-100">
+                <p className="text-gray-600">
+                  PWSAT stands for Physics Wallah Scholarship cum Admission Test. PW has created this scholarship test to identify and nurture talented students who aspire to pursue careers in Medical and Engineering domains. PWSAT provides up to 90% Scholarship.
+                </p>
+              </div>
+            </div>
+
+            {/* How PWSAT benefits students */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold mb-6">How PWSAT benefit students</h2>
+              <div className="grid grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-xl border border-gray-100 text-center">
+                  <div className="text-[#FF6934] font-bold text-2xl mb-2">45K+</div>
+                  <p className="text-gray-600 text-sm">Students received the PW scholarship</p>
+                </div>
+                <div className="bg-white p-6 rounded-xl border border-gray-100 text-center">
+                  <div className="text-[#FF6934] font-bold text-2xl mb-2">INR 40 Cr+</div>
+                  <p className="text-gray-600 text-sm">Worth of scholarships already given</p>
+                </div>
+                <div className="bg-white p-6 rounded-xl border border-gray-100 text-center">
+                  <div className="text-[#FF6934] font-bold text-2xl mb-2">3.7L+</div>
+                  <p className="text-gray-600 text-sm">Tests have been already conducted across India</p>
+                </div>
+              </div>
+            </div>
+
+            {/* FAQ Section */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold mb-6">Frequently Asked Questions</h2>
+              <div className="space-y-4">
+                <div className="bg-white p-4 rounded-xl border border-gray-100">
+                  <button className="flex justify-between items-center w-full">
+                    <span className="font-semibold">What will be the PWSAT Syllabus?</span>
+                    <ChevronRight size={20} className="text-gray-400" />
+                  </button>
+                </div>
+                {/* Add more FAQ items as needed */}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assignment Upload Modal */}
+      {showAssignmentModal && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black/50 z-50"
+            onClick={() => setShowAssignmentModal(false)}
+          />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[500px] bg-white rounded-2xl shadow-xl z-50">
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-xl font-semibold">Submit Assignment</h3>
+                <button 
+                  onClick={() => setShowAssignmentModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X size={20} className="text-gray-400" />
+                </button>
+              </div>
+              <p className="text-sm text-gray-500">Upload your assignment files (PDF, JPG, JPEG, PNG)</p>
+            </div>
+
+            <div className="p-6">
+              <div 
+                className={`border-2 border-dashed rounded-xl p-8 text-center ${
+                  assignmentDragging ? 'border-[#8B5CF6] bg-purple-50' : 'border-gray-200'
+                }`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setAssignmentDragging(true);
+                }}
+                onDragLeave={() => setAssignmentDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setAssignmentDragging(false);
+                  handleAssignmentFiles(e.dataTransfer.files);
+                }}
+              >
+                <input
+                  type="file"
+                  id="assignment-upload"
+                  className="hidden"
+                  onChange={(e) => handleAssignmentFiles(e.target.files)}
+                  multiple
+                  accept="image/*,.pdf"
+                />
+                <label 
+                  htmlFor="assignment-upload" 
+                  className="flex flex-col items-center cursor-pointer"
+                >
+                  <div className="p-3 bg-purple-100 rounded-xl mb-4">
+                    <Upload size={24} className="text-[#8B5CF6]" />
+                  </div>
+                  <p className="text-sm font-medium mb-1">
+                    Drag and drop your files here or click to browse
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Maximum file size: 10MB
+                  </p>
+                </label>
+              </div>
+
+              {/* File Preview Section */}
+              {assignmentFiles.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="text-sm font-medium mb-3">Uploaded Files</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {assignmentFiles.map(file => (
+                      <div key={file.id} className="relative group">
+                        <div className="p-3 border border-gray-100 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            {file.type === 'image' ? (
+                              <img 
+                                src={file.preview} 
+                                alt="Preview" 
+                                className="w-10 h-10 rounded object-cover"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 bg-purple-50 rounded flex items-center justify-center">
+                                <FileText size={20} className="text-[#8B5CF6]" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {file.file.name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {(file.file.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => setAssignmentFiles(prev => prev.filter(f => f.id !== file.id))}
+                          className="absolute -top-2 -right-2 bg-white rounded-full shadow-md p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X size={14} className="text-gray-600" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-gray-100">
+              <div className="flex items-center justify-end gap-3">
+                <button 
+                  onClick={() => setShowAssignmentModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={() => {
+                    // Handle assignment submission here
+                    setShowAssignmentModal(false);
+                    setAssignmentFiles([]);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-white bg-[#8B5CF6] hover:bg-[#7C3AED] rounded-lg"
+                >
+                  Submit Assignment
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Add this Courses Side Tray right before the closing </div> of your main container */}
+      {showCoursesTray && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black/50 z-[60]"
+            onClick={() => setShowCoursesTray(false)}
+          />
+          <div className="fixed top-20 left-[calc(100%-600px)] w-[280px] bg-white shadow-lg z-[70] rounded-xl">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-[15px] font-semibold">Upcoming Courses</h3>
+                <button 
+                  onClick={() => setShowCoursesTray(false)}
+                  className="p-1.5 hover:bg-gray-100 rounded-full"
+                >
+                  <X size={18} className="text-gray-600" />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {/* Learn Math */}
+                <div className="bg-[#F8F9FA] p-3 rounded-lg border border-gray-100 hover:shadow-sm transition-all cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-blue-100">
+                      <BookOpen className="text-blue-600" size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-[14px]">Learn Math</h4>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="text-[12px] text-blue-600">View Details</span>
+                        <ChevronRight size={12} className="text-blue-600" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Learn Science */}
+                <div className="bg-[#F8F9FA] p-3 rounded-lg border border-gray-100 hover:shadow-sm transition-all cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-purple-100">
+                      <BookOpen className="text-purple-600" size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-[14px]">Learn Science</h4>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="text-[12px] text-purple-600">View Details</span>
+                        <ChevronRight size={12} className="text-purple-600" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Spoken English */}
+                <div className="bg-[#F8F9FA] p-3 rounded-lg border border-gray-100 hover:shadow-sm transition-all cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-green-100">
+                      <MessageSquare className="text-green-600" size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-[14px]">Spoken English</h4>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="text-[12px] text-green-600">View Details</span>
+                        <ChevronRight size={12} className="text-green-600" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Robotics */}
+                <div className="bg-[#F8F9FA] p-3 rounded-lg border border-gray-100 hover:shadow-sm transition-all cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-orange-100">
+                      <Command className="text-orange-600" size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-[14px]">Robotics</h4>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="text-[12px] text-orange-600">View Details</span>
+                        <ChevronRight size={12} className="text-orange-600" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Study Tools Tray */}
+      {showStudyToolsTray && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black/50 z-[60]"
+            onClick={() => setShowStudyToolsTray(false)}
+          />
+          <div className="fixed top-20 left-[calc(100%-600px)] w-[280px] bg-white shadow-lg z-[70] rounded-xl">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-[15px] font-semibold">Study Tools</h3>
+                <button 
+                  onClick={() => setShowStudyToolsTray(false)}
+                  className="p-1.5 hover:bg-gray-100 rounded-full"
+                >
+                  <X size={18} className="text-gray-600" />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {/* Formula Sheet */}
+                <div className="bg-[#F8F9FA] p-3 rounded-lg border border-gray-100 hover:shadow-sm transition-all cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-blue-100">
+                      <FileText className="text-blue-600" size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-[14px]">Formula Sheet</h4>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="text-[12px] text-blue-600">Access Formulas</span>
+                        <ChevronRight size={12} className="text-blue-600" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Calculator */}
+                <div className="bg-[#F8F9FA] p-3 rounded-lg border border-gray-100 hover:shadow-sm transition-all cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-purple-100">
+                      <Calculator className="text-purple-600" size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-[14px]">Calculator</h4>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="text-[12px] text-purple-600">Scientific Calculator</span>
+                        <ChevronRight size={12} className="text-purple-600" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Previous Year Papers */}
+                <div className="bg-[#F8F9FA] p-3 rounded-lg border border-gray-100 hover:shadow-sm transition-all cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-green-100">
+                      <BookOpen className="text-green-600" size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-[14px]">Previous Year Papers</h4>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="text-[12px] text-green-600">View Papers</span>
+                        <ChevronRight size={12} className="text-green-600" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Result */}
+                <div className="bg-[#F8F9FA] p-3 rounded-lg border border-gray-100 hover:shadow-sm transition-all cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-orange-100">
+                      <Trophy className="text-orange-600" size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-[14px]">Result</h4>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="text-[12px] text-orange-600">Check Results</span>
+                        <ChevronRight size={12} className="text-orange-600" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
