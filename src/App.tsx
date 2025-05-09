@@ -44,7 +44,7 @@ import bgImage from "./bg.jpg";
 import EmojiPicker from 'emoji-picker-react';
 import type { EmojiClickData } from 'emoji-picker-react';
 
-// Add these new types for file handling
+
 type FileType = 'image' | 'document' | 'pdf';
 
 interface AttachmentType {
@@ -144,13 +144,13 @@ function App() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const slides = [
     {
-      title: "PWSAT",
+      title: "ViniIAS",
       subtitle: "Win upto 90% Scholarship",
       duration: "90 mins",
       enrolledCount: "7k+ students already enrolled",
-      image: "path_to_pwsat_image.jpg" // You'll need to add this image
+      image: "path_to_pwsat_image.jpg" 
     },
-    // Add more slides as needed
+   
   ];
 
   // First, add this new state for the assignment upload modal
@@ -216,7 +216,7 @@ function App() {
       const type = getFileType(file);
       const id = Math.random().toString(36).substr(2, 9);
 
-      // Create preview for images
+ 
       if (type === 'image') {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -272,7 +272,7 @@ function App() {
       online: true
     },
     { 
-      name: 'Paris Liana',
+      name: 'Abhishek Saini',
       msg: 'Let me check that assignment!',
       time: '10:30',
       img: 'photo-1517841905240-472988babdf9',
@@ -280,7 +280,7 @@ function App() {
       online: true
     },
     {
-      name: 'Dr. Sarah Wilson',
+      name: 'Akshit',
       msg: 'Your progress is impressive...',
       time: '09:45',
       img: 'photo-1494790108377-be9c29b29330',
@@ -288,7 +288,7 @@ function App() {
       online: true
     },
     {
-      name: 'Prof. Michael Chen',
+      name: 'Ansh Dhiman',
       msg: "Here's the study material for...",
       time: '09:15',
       img: 'photo-1507003211169-00dcc994a43e',
@@ -296,7 +296,7 @@ function App() {
       online: false
     },
     {
-      name: 'Emma Thompson',
+      name: 'Akshat Malik',
       msg: 'Thanks for your help with...',
       time: 'Yesterday',
       img: 'photo-1438761681033-6461ffad8d80',
@@ -304,7 +304,7 @@ function App() {
       online: false
     },
     {
-      name: 'David Kumar',
+      name: 'Raju Yadav',
       msg: 'The group study session is...',
       time: 'Yesterday',
       img: 'photo-1500648767791-00dcc994a43e',
